@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/program_options.hpp>
+#include "constants.h"
 
 using std::string;
 using std::cout;
@@ -7,7 +8,6 @@ using std::endl;
 using std::string;
 
 namespace po = boost::program_options;
-const int number_arguments = 4;
 
 void iterate_over_command_line_options(po::variables_map chosen_options) {
     for (const auto& it : chosen_options) {
@@ -20,6 +20,8 @@ void iterate_over_command_line_options(po::variables_map chosen_options) {
         else
             std::cout << "error";
     }
+
+    cout << "\n";
 }
 
 void print_saved_arguments(string& temp_gui, string& player_name,
@@ -35,25 +37,29 @@ void read_command_line_options(string& temp_gui, string& player_name,
                                int argc, char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
-            ("help", "me please")
-            ("gui-address,d", "host_name:port OR IPv4:port "
-                              "OR IPv6:port\nGUI address")
-            ("player-name,n", "Name of the player")
+            ("help,h", "me please")
+            ("gui-address,d", po::value<string>(),
+                    "host_name:port OR IPv4:port OR IPv6:port\nGUI address")
+            ("player-name,n", po::value<string>(),"Name of the player")
             ("port,p", po::value<uint16_t>(),
                     "The number of the port on which the client listens "
                     "messages from GUI")
-            ("server-address,s", "host_name:port OR IPv4:port "
-                                 "OR IPv6:port\nGUI address\nserver address")
+            ("server-address,s", po::value<string>(),
+                    "host_name:port OR IPv4:port OR IPv6:port\nGUI "
+                    "address\nserver address")
     ;
 
     po::variables_map chosen_options;
     po::store(po::parse_command_line(argc, argv, desc), chosen_options);
     po::notify(chosen_options);
+    cout << chosen_options.size() << " const: " << client_number_arguments << endl;
 
     if (chosen_options.count("help")) {
         cout << desc << endl;
+
+        exit(0);
     }
-    else if (chosen_options.size() < number_arguments) {
+    else if (chosen_options.size() < client_number_arguments) {
         cout << "Incorrect number of arguments\n\n" << desc << endl;
 
         exit(1);
@@ -69,7 +75,7 @@ void read_command_line_options(string& temp_gui, string& player_name,
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << "Hello, World!" << std::endl;
+//    std::cout << "Hello, World!" << std::endl;
     string temp_gui;
     string player_name;
     uint16_t port;

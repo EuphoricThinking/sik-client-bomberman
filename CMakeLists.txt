@@ -3,6 +3,7 @@ project(client_bomberman)
 
 set(CMAKE_CXX_STANDARD 20)
 
+#add_library(constant constants.h)
 add_executable(client_bomberman main.cpp)
 set (CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion -Werror -O2") #-pthread -lboost_thread")
 
