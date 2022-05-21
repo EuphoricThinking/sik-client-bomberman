@@ -7,6 +7,6 @@ add_executable(client_bomberman main.cpp)
 set (CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion -Werror -O2") #-pthread -lboost_thread")
 
 set(Boost_DEBUG 1)
-find_package(Boost 1.71 COMPONENTS system iostreams date_time thread REQUIRED)
+find_package(Boost 1.71 COMPONENTS system iostreams date_time thread program_options REQUIRED)
 
 target_link_libraries(client_bomberman ${Boost_LIBRARIES})
