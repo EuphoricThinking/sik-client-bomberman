@@ -8,6 +8,7 @@ using std::endl;
 using std::cerr;
 using std::string;
 using std::exception;
+using std::strtoll;
 
 namespace po = boost::program_options;
 
@@ -15,7 +16,7 @@ void iterate_over_command_line_options(po::variables_map chosen_options) {
     for (const auto& it : chosen_options) {
         cout << it.first.c_str() << " ";
         auto& value = it.second.value();
-        if (auto v = boost::any_cast<uint32_t>(&value))
+        if (auto v = boost::any_cast<int64_t>(&value))
             std::cout << *v;
         else if (auto v1 = boost::any_cast<std::string>(&value))
             std::cout << *v1;
@@ -45,8 +46,36 @@ void validate_input(string& temp_gui,
     else if (port < u16_min || port > u16_max) {
         cout << "Incorrect port value; should be in range [" << u16_min << ", "
              << u16_max << "]\n";
+        exit(1);
     }
 }
+//
+//class u16 {
+//public:
+//    u16(int64_t i): i(i) {}
+//    int64_t i;
+//};
+//
+//void validate(boost::any& v,
+//              const std::vector<std::string>& values,
+//              u16* target_type, int)
+//{
+//
+//    using namespace boost::program_options;
+//
+//    // Make sure no previous assignment to 'a' was made.
+//    validators::check_first_occurrence(v);
+//    // Extract the first string from 'values'. If there is more than
+//    // one string, it's an error, and exception will be thrown.
+//    const string& s = validators::get_single_string(values);
+//    int64_t to_int = strtoll(s.c_str(), NULL, 10);
+//    if (to_int >= 0 && to_int <= u16_max) {
+//        v = boost::any(u16(to_int));
+//    } else {
+//        throw validation_error(validation_error::invalid_option_value);
+//    }
+//}
+
 
 void read_command_line_options(string& temp_gui, string& player_name,
                                int64_t& port, string& server_address,
