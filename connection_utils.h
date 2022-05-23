@@ -57,8 +57,20 @@ private:
 
         }
 
+        // Send to server
+        boost::asio::async_write(socket_tcp_, boost::asio::buffer(data_to_send_server),
+                                 boost::bind(&Client_bomberman::after_sent_data_to_server, this,
+                                             boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+    }
+
+    void after_sent_data_to_server(const boost::system::error_code& error,
+                                   std::size_t) {
+        // Receive from GUI - repeat the cycle
         receive_from_gui_send_to_server();
     }
+
+
 
     void receive_from_server_send_to_gui() {
 
@@ -71,6 +83,7 @@ private:
                 boost::bind(&Client_bomberman::process_data_from_gui, this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred));
+
     }
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
