@@ -17,11 +17,14 @@ using boost::asio::ip::udp;
 using boost::asio::io_context;
 
 using std::string;
+using std::vector;
 
 using std::exception;
 using std::cerr;
 using std::endl;
 using std::cout;
+
+using data = vector<uint8_t>;
 
 /*
  * Acceptor
@@ -43,6 +46,15 @@ private:
     udp::socket gui_socket_to_receive_;
 
     bool gameStarted;
+    data received_data_gui;
+    data received_data_server;
+    data data_to_send_gui;
+    data data_to_send_server;
+
+    void process_data_from_gui(const boost::system::error_code& error,
+                               std::size_t) {
+
+    }
 
     void receive_from_server_send_to_gui() {
 
@@ -50,7 +62,11 @@ private:
 
     void receive_from_gui_send_to_server() {
         // Receive from GUI
-        size_t gui_received_length;
+        gui_socket_to_receive_.async_receive(
+                boost::asio::buffer(received_data_gui),
+                boost::bind(&Client_bomberman::process_data_from_gui, this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred));
     }
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
@@ -62,7 +78,7 @@ public:
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
         socket_udp_(io),
-        gui_endpoint_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
+        gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false)
 {
         try {
