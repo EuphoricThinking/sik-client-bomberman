@@ -24,25 +24,31 @@ private:
     io_context& io_;
 
     tcp::socket socket_tcp_;
+    tcp::endpoint server_endpoint_;
     tcp::acceptor acceptor_;
+    tcp::resolver tcp_resolver_;
 
     udp::resolver udp_resolver_;
     udp::socket socket_udp_;
     udp::endpoint gui_endpoint_;
 
 public:
-    Client_bomberman(io_context& io, uint16_t server_port, const string gui_name,
-                     uint16_t gui_port)
+    Client_bomberman(io_context& io, string server_name, string server_port, const string gui_name,
+                     string gui_port)
     :   io_(io),
         socket_tcp_(io),
-        acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
+        tcp_resolver_(io),
+        //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
         socket_udp_(io)
 {
         try {
             //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
-            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), "",gui_name).begin();
+            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_name).begin();
             socket_udp_.open(udp::v6());
+
+            server_endpoint_ = *tcp_resolver_.resolve(server_name, server_port).begin();
+            acceptor_ = new tcp::acceptor(io, server_endpoint_);
             //udp::socket s(io, gui_endpoint_);
             //socket_udp_ = s;
         }
