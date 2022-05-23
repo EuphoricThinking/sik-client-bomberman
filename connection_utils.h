@@ -38,8 +38,9 @@ private:
 
     udp::resolver udp_resolver_;
     udp::socket socket_udp_;
-    udp::endpoint gui_endpoint_to_send_;
-    udp::endpoint gui_endpoint_to_receive_;
+//    udp::endpoint gui_endpoint_to_send_;
+//    udp::endpoint gui_endpoint_to_receive_;
+    udp::socket gui_socket_to_receive_;
 
     bool gameStarted;
 
@@ -53,7 +54,7 @@ private:
     }
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
-                     const string& gui_port)
+                     const string& gui_port, uint16_t client_port)
     :   //io_(io),
         socket_tcp_(io),
         // acceptor_(io),
@@ -61,6 +62,7 @@ public:
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
         socket_udp_(io),
+        gui_endpoint_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false)
 {
         try {
@@ -72,9 +74,17 @@ public:
                     tcp_resolver_.resolve(server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
 
-            gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::v6(), gui_name, gui_port).begin();
-            socket_udp_.open(udp::v6());
-            
+            udp::resolver::results_type gui_endpoint_to_send_ = udp_resolver_.resolve(gui_name, gui_port);
+            //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
+            //socket_udp_.open(udp::v6());
+            boost::asio::connect(socket_udp_, gui_endpoint_to_send_);
+
+            //udp::resolver res(io_context)
+            //auto endpoints = res.resolve(host, port)
+            //gui_output.open(udp::v6())
+            //gui_output.connect(endpoints->endpoint())
+
+            //gui_input(io_context, udp::endpoint(udp::v6(), port))
 
             receive_from_server_send_to_gui();
             receive_from_gui_send_to_server();
