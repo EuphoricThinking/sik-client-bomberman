@@ -37,8 +37,8 @@ private:
     udp::endpoint gui_endpoint_;
 
 public:
-    Client_bomberman(io_context& io, string server_name, string server_port, const string gui_name,
-                     string gui_port)
+    Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
+                     const string& gui_port)
     :   io_(io),
         socket_tcp_(io),
         acceptor_(io),
@@ -49,7 +49,7 @@ public:
 {
         try {
             //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
-            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_name).begin();
+            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
             socket_udp_.open(udp::v6());
 
             server_endpoint_ = *tcp_resolver_.resolve(tcp::v6(), server_name, server_port).begin();
