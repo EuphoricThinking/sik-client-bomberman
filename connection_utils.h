@@ -53,7 +53,11 @@ private:
 
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t) {
+        if (!error) {
 
+        }
+
+        receive_from_gui_send_to_server();
     }
 
     void receive_from_server_send_to_gui() {
