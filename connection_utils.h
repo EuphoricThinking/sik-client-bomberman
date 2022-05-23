@@ -10,34 +10,49 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
+#include <iostream>
 
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
+using boost::asio::io_context;
 
-class TCP_connection
-        : public boost::enable_shared_from_this<TCP_connection>
-{
-public:
-    typedef boost::shared_ptr<TCP_connection> pointer;
+using std::string;
+using std::cerr;
 
-    static pointer create(boost::asio::io_context& io_context);
-
-    tcp::socket& socket();
-
+class Client_bomberman {
 private:
-    TCP_connection(boost::asio::io_context& io_context)
-    : socket_(io_context)
-            {
-            }
+    io_context& io_;
 
-    void handle_write()
-    {
-    }
+    tcp::socket socket_tcp_;
+    tcp::acceptor acceptor_;
 
-    tcp::socket socket_;
-    std::string message_;
+    udp::resolver udp_resolver_;
+    udp::socket socket_udp_;
+    udp::endpoint gui_endpoint_;
+
+public:
+    Client_bomberman(io_context& io, uint16_t server_port, const string gui_name,
+                     uint16_t gui_port)
+    :   io_(io),
+        socket_tcp_(io),
+        acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
+        udp_resolver_(io),
+        socket_udp_(io)
+{
+        try {
+            //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
+            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), "",gui_name).begin();
+            socket_udp_.open(udp::v6());
+            //udp::socket s(io, gui_endpoint_);
+            //socket_udp_ = s;
+        }
+        catch (std::exception& e)
+        {
+            cerr << e.what() << std::endl;
+        }
+
 };
 
-class Client_bomberman;
+};
 
 #endif //CLIENT_BOMBERMAN_CONNECTION_UTILS_H
