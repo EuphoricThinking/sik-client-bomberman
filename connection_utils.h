@@ -38,7 +38,8 @@ private:
 
     udp::resolver udp_resolver_;
     udp::socket socket_udp_;
-    udp::endpoint gui_endpoint_;
+    udp::endpoint gui_endpoint_to_send_;
+    udp::endpoint gui_endpoint_to_receive_;
 
     bool gameStarted;
 
@@ -60,11 +61,10 @@ public:
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
         socket_udp_(io),
-
         gameStarted(false)
 {
         try {
-            //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
+            //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
             boost::asio::ip::tcp::no_delay option(true);
             socket_tcp_.set_option(option);
 
@@ -72,14 +72,15 @@ public:
                     tcp_resolver_.resolve(server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
 
-            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
+            gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::v6(), gui_name, gui_port).begin();
             socket_udp_.open(udp::v6());
+            
 
             receive_from_server_send_to_gui();
             receive_from_gui_send_to_server();
             //acceptor_.open(tcp::v6());
             //acceptor_.bind(server_endpoints_);
-            //udp::socket s(io, gui_endpoint_);
+            //udp::socket s(io, gui_endpoint_to_send_);
             //socket_udp_ = s;
         }
         catch (exception& e)
