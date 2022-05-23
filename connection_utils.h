@@ -40,6 +40,15 @@ private:
     udp::socket socket_udp_;
     udp::endpoint gui_endpoint_;
 
+    bool gameStarted;
+
+    void receive_from_server_send_to_gui() {
+
+    }
+
+    void receive_from_gui_send_to_server() {
+
+    }
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
                      const string& gui_port)
@@ -49,7 +58,9 @@ public:
         tcp_resolver_(io),
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
-        socket_udp_(io)
+        socket_udp_(io),
+
+        gameStarted(false)
 {
         try {
             //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
@@ -59,6 +70,9 @@ public:
 
             gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
             socket_udp_.open(udp::v6());
+
+            receive_from_server_send_to_gui();
+            receive_from_gui_send_to_server();
             //acceptor_.open(tcp::v6());
             //acceptor_.bind(server_endpoints_);
             //udp::socket s(io, gui_endpoint_);
