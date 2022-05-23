@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 #include "constants.h"
 
 using std::string;
