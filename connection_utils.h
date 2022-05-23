@@ -19,6 +19,10 @@ using boost::asio::io_context;
 using std::string;
 using std::cerr;
 
+/*
+ * Acceptor
+ * https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/basic_socket_acceptor/bind/overload1.html
+ */
 class Client_bomberman {
 private:
     io_context& io_;
@@ -37,6 +41,7 @@ public:
                      string gui_port)
     :   io_(io),
         socket_tcp_(io),
+        acceptor_(io),
         tcp_resolver_(io),
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
@@ -47,8 +52,9 @@ public:
             gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_name).begin();
             socket_udp_.open(udp::v6());
 
-            server_endpoint_ = *tcp_resolver_.resolve(server_name, server_port).begin();
-            acceptor_ = new tcp::acceptor(io, server_endpoint_);
+            server_endpoint_ = *tcp_resolver_.resolve(tcp::v6(), server_name, server_port).begin();
+            acceptor_.open(tcp::v6());
+            acceptor_.bind(server_endpoint_);
             //udp::socket s(io, gui_endpoint_);
             //socket_udp_ = s;
         }
