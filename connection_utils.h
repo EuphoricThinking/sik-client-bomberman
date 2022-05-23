@@ -47,7 +47,8 @@ private:
     }
 
     void receive_from_gui_send_to_server() {
-
+        // Receive from GUI
+        size_t gui_received_length;
     }
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
@@ -64,6 +65,9 @@ public:
 {
         try {
             //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
+            boost::asio::ip::tcp::no_delay option(true);
+            socket_tcp_.set_option(option);
+
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
