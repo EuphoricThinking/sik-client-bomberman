@@ -29,7 +29,7 @@ using std::cout;
  */
 class Client_bomberman {
 private:
-    io_context& io_;
+    //io_context& io_;
 
     tcp::socket socket_tcp_;
     //tcp::endpoint server_endpoints_;
@@ -43,7 +43,7 @@ private:
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
                      const string& gui_port)
-    :   io_(io),
+    :   //io_(io),
         socket_tcp_(io),
         // acceptor_(io),
         tcp_resolver_(io),
@@ -53,12 +53,12 @@ public:
 {
         try {
             //gui_endpoint_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
-            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
-            socket_udp_.open(udp::v6());
-
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
+
+            gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
+            socket_udp_.open(udp::v6());
             //acceptor_.open(tcp::v6());
             //acceptor_.bind(server_endpoints_);
             //udp::socket s(io, gui_endpoint_);
