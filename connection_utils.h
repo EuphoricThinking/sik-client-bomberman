@@ -17,7 +17,11 @@ using boost::asio::ip::udp;
 using boost::asio::io_context;
 
 using std::string;
+
+using std::exception;
 using std::cerr;
+using std::endl;
+using std::cout;
 
 /*
  * Acceptor
@@ -28,8 +32,8 @@ private:
     io_context& io_;
 
     tcp::socket socket_tcp_;
-    tcp::endpoint server_endpoint_;
-    tcp::acceptor acceptor_;
+    //tcp::endpoint server_endpoints_;
+    // tcp::acceptor acceptor_;
     tcp::resolver tcp_resolver_;
 
     udp::resolver udp_resolver_;
@@ -41,7 +45,7 @@ public:
                      const string& gui_port)
     :   io_(io),
         socket_tcp_(io),
-        acceptor_(io),
+        // acceptor_(io),
         tcp_resolver_(io),
         //acceptor_(io, tcp::endpoint(tcp::v6(), server_port)),
         udp_resolver_(io),
@@ -52,15 +56,17 @@ public:
             gui_endpoint_ = *udp_resolver_.resolve(udp::v6(), gui_name,gui_port).begin();
             socket_udp_.open(udp::v6());
 
-            server_endpoint_ = *tcp_resolver_.resolve(tcp::v6(), server_name, server_port).begin();
-            acceptor_.open(tcp::v6());
-            acceptor_.bind(server_endpoint_);
+            tcp::resolver::results_type server_endpoints_ =
+                    tcp_resolver_.resolve(server_name, server_port);
+            boost::asio::connect(socket_tcp_, server_endpoints_);
+            //acceptor_.open(tcp::v6());
+            //acceptor_.bind(server_endpoints_);
             //udp::socket s(io, gui_endpoint_);
             //socket_udp_ = s;
         }
-        catch (std::exception& e)
+        catch (exception& e)
         {
-            cerr << e.what() << std::endl;
+            cerr << e.what() << endl;
         }
 
 };
