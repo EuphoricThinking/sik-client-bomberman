@@ -51,6 +51,9 @@ private:
     data data_to_send_gui;
     data data_to_send_server;
 
+    /*
+     *  GUI -> client -> server
+     */
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t) {
         if (!error) {
@@ -70,12 +73,6 @@ private:
         receive_from_gui_send_to_server();
     }
 
-
-
-    void receive_from_server_send_to_gui() {
-
-    }
-
     void receive_from_gui_send_to_server() {
         // Receive from GUI
         gui_socket_to_receive_.async_receive(
@@ -85,6 +82,44 @@ private:
                             boost::asio::placeholders::bytes_transferred));
 
     }
+
+    /*
+     *  Server -> client -> GUI
+     */
+    void receive_from_server_send_to_gui() {
+        socket_tcp_.async_read_some(boost::asio::buffer(received_data_server),
+                                    boost::bind(&Client_bomberman::after_receive_from_server,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
+    }
+
+    void after_receive_from_server(const boost::system::error_code& error,
+                                   std::size_t) {
+
+        if (false) { // If all the message bytes haven't been read; reading has to be continued
+            receive_from_gui_send_to_server();
+        }
+        else {
+            process_data_from_server_send_to_gui();
+        }
+    }
+
+    void process_data_from_server_send_to_gui() {
+
+        socket_udp_.async_send(boost::asio::buffer(data_to_send_gui),
+                               boost::bind(&Client_bomberman::after_send_to_gui,
+                                           this,
+                                           boost::asio::placeholders::error,
+                                           boost::asio::placeholders::bytes_transferred));
+    }
+
+    void after_send_to_gui(const boost::system::error_code& error,
+                           std::size_t) {
+        // Repeat the cycle
+        receive_from_server_send_to_gui();
+    }
+    
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
                      const string& gui_port, uint16_t client_port)
@@ -107,10 +142,10 @@ public:
                     tcp_resolver_.resolve(server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
 
-            udp::resolver::results_type gui_endpoint_to_send_ = udp_resolver_.resolve(gui_name, gui_port);
+            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port);
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
             //socket_udp_.open(udp::v6());
-            boost::asio::connect(socket_udp_, gui_endpoint_to_send_);
+            boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
 
             //udp::resolver res(io_context)
             //auto endpoints = res.resolve(host, port)
