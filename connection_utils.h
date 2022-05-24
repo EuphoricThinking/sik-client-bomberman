@@ -79,8 +79,8 @@ typedef struct Bomb {
 
 typedef struct GameData {
     uint8_t players_count = 0;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    uint16_t size_x = 0;
+    uint16_t size_y = 0;
 
     uint16_t game_length = 0;
     uint16_t explosion_radius = 0;
@@ -160,6 +160,7 @@ private:
     std::unordered_set<player_id_dt> death_per_turn_temp;
 
     string server_name;
+    uint8_t send_to_gui_id;
 
 
     /*
@@ -248,6 +249,8 @@ private:
                 receive_from_server_send_to_gui();
             }
             else {
+                int move_further_in_buffer = 0;
+
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
                         if (!temp_process_server_mess.is_hello_string_length_read) {
@@ -269,8 +272,27 @@ private:
                         // Full body is read
                         validate_data_compare(read_bytes, num_bytes_to_read_server,
                                               "To little data in Hello\n");
-                        game_status.players_count = big_to_native(*(uint8_t*) received_data_server);
+                        game_status.players_count = (*(uint8_t*) received_data_server);
 
+                        move_further_in_buffer++;
+                        game_status.size_x = big_to_native(*(uint16_t*)
+                                (received_data_server + move_further_in_buffer));
+
+                        move_further_in_buffer += 2;
+                        game_status.size_y = big_to_native(*(uint16_t*)
+                                (received_data_server + move_further_in_buffer));
+
+                        move_further_in_buffer += 2;
+                        game_status.game_length = big_to_native(*(uint16_t*)
+                                (received_data_server + move_further_in_buffer));
+
+                        move_further_in_buffer += 2;
+                        game_status.explosion_radius = big_to_native(*(uint16_t*)
+                                (received_data_server + move_further_in_buffer));
+
+                        move_further_in_buffer += 2;
+                        game_status.bomb_timer = big_to_native(*(uint16_t*)
+                                (received_data_server + move_further_in_buffer));
 
                         break;
 
@@ -331,7 +353,8 @@ public:
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false),
         num_bytes_to_read_server(1),
-        player_positions() //,
+        player_positions(),
+        send_to_gui_id(0)//,
         // blocks(),
         // bombs()
 {
@@ -341,10 +364,10 @@ public:
             socket_tcp_.set_option(option);
 
             tcp::resolver::results_type server_endpoints_ =
-                    tcp_resolver_.resolve(server_name, server_port);
+                    tcp_resolver_.resolve(tcp::v6(), server_name, server_port);
             boost::asio::connect(socket_tcp_, server_endpoints_);
 
-            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port);
+            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
             //socket_udp_.open(udp::v6());
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
