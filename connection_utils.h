@@ -53,6 +53,20 @@ private:
 
     size_t num_bytes_to_read_server;
 
+    int server_current_message_id;
+
+    bool is_hello_string_length_read;
+    bool is_hello_string_read;
+
+    // For both AcceptedPlayer and GameStarted
+    bool is_player_header_read; // PlayerId and string length
+    bool is_player_string_read;
+
+    size_t map_length;
+    size_t map_read_elements;
+
+
+
     /*
      *  GUI -> client -> server
      */
