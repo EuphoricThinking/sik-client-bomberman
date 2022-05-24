@@ -12,6 +12,8 @@
 #include <boost/asio.hpp>
 #include <iostream>
 
+#include "constants.h"
+
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
 using boost::asio::io_context;
@@ -24,7 +26,10 @@ using std::cerr;
 using std::endl;
 using std::cout;
 
-using data = vector<uint8_t>;
+using udp_buff_send = boost::array<uint8_t, max_udp_roundup>;
+using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
+using tcp_buff_rec = boost::array<uint8_t, tcp_buff_default>;
+using tcp_buff_send = std::vector<uint8_t>;
 
 typedef struct serverMessage {
     int server_current_message_id = -1;
@@ -76,10 +81,10 @@ private:
     udp::socket gui_socket_to_receive_;
 
     bool gameStarted;
-    data received_data_gui;
-    data received_data_server;
-    data data_to_send_gui;
-    data data_to_send_server;
+    input_mess received_data_gui;
+    tcp_buff_rec received_data_server;
+    udp_buff_send data_to_send_gui;
+    tcp_buff_send data_to_send_server;
 
     size_t num_bytes_to_read_server;
 

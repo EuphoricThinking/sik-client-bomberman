@@ -11,6 +11,9 @@ const int u16_max =  65535;
 const int u16_min = 0;
 const char host_port_delimiter = ':';
 
+const size_t max_udp_roundup = 65550; //65527;
+const size_t max_input_mess_roundup = 5;
+const size_t tcp_buff_default = 300; // max string length and roundup
 /*
  *  Server message parts lengths in  bytes
  */
