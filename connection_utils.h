@@ -235,7 +235,7 @@ private:
                             receive_from_server_send_to_gui();
                         }
                         else if (!temp_process_server_mess.is_hello_string_read) {
-
+                            server_name = std::string(received_data_server, received_data_server + read_bytes);
                         }
 
                         break;
