@@ -50,7 +50,7 @@ typedef struct Bomb {
 } Bomb;
 
 typedef struct ServerMessageData {
-    int server_current_message_id = -1;
+    int8_t server_current_message_id = -1;
 
     // Hello
     bool is_hello_string_length_read = false;
@@ -74,7 +74,7 @@ typedef struct ServerMessageData {
     size_t inner_event_list_read_elements = 0;
 
     // Events
-    int event_id = -1;
+    int8_t event_id = -1;
     bool is_inner_event_header_read = false; // BombId, List PlayerId length
     bool is_robots_destroyed_read = false;
     bool is_blocks_destroyed_length_read = false;
@@ -106,7 +106,7 @@ private:
 
     size_t num_bytes_to_read_server;
 
-    ServerMessageData temporary_processing_server_message_data;
+    ServerMessageData temp_process_server_mess;
 
     std::map<player_id_dt, Player> players;
     std::map<player_id_dt, Position> player_positions;
@@ -168,8 +168,10 @@ private:
                                    std::size_t read_bytes) {
 
         if (!error || error == boost::asio::error::eof || read_bytes > 0) { //read_bytes
-            if (temporary_processing_server_message_data.server_current_message_id == - 1) {
+            if (temp_process_server_mess.server_current_message_id == - 1) {
                 // Check read one byte
+                temp_process_server_mess.server_current_message_id =
+                        (int8_t)received_data_server[0];
             }
 //            if (false) { // If all the message bytes haven't been read; reading has to be continued
 //                receive_from_gui_send_to_server();
