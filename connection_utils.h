@@ -51,6 +51,8 @@ private:
     data data_to_send_gui;
     data data_to_send_server;
 
+    size_t num_bytes_to_read_server;
+
     /*
      *  GUI -> client -> server
      */
@@ -87,7 +89,9 @@ private:
      *  Server -> client -> GUI
      */
     void receive_from_server_send_to_gui() {
-        boost::asio::async_read(socket_tcp_, boost::asio::buffer(received_data_server),
+        boost::asio::async_read(socket_tcp_,
+                                boost::asio::buffer(received_data_server,
+                                                    num_bytes_to_read_server),
                                     boost::bind(&Client_bomberman::after_receive_from_server,
                                                 this,
                                                 boost::asio::placeholders::error,
@@ -131,7 +135,8 @@ public:
         udp_resolver_(io),
         socket_udp_(io),
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
-        gameStarted(false)
+        gameStarted(false),
+        num_bytes_to_read_server(1)
 {
         try {
             //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
