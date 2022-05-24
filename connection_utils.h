@@ -12,7 +12,8 @@
 #include <boost/asio.hpp>
 #include <iostream>
 
-#include <unordered_set>;
+#include <unordered_set>
+#include <set>
 
 #include "constants.h"
 
@@ -109,7 +110,13 @@ private:
 
     std::map<player_id_dt, Player> players;
     std::map<player_id_dt, Position> player_positions;
-    std::map<pos_x, std::unordered_set<pos_y>> blocks;
+    //std::map<pos_x, std::unordered_set<pos_y>> blocks;
+    std::set<std::pair<pos_x, pos_y>> blocks;
+    std::map<std::pair<pos_x, pos_y>, timer_dt> bombs;
+
+    std::set<std::pair<pos_x, pos_y>> explosions_temp;
+    std::map<player_id_dt, score_dt> scores;
+    std::unordered_set<player_id_dt> death_per_turn_temp;
 
 
     /*
@@ -199,7 +206,10 @@ public:
         socket_udp_(io),
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false),
-        num_bytes_to_read_server(1)
+        num_bytes_to_read_server(1),
+        player_positions() //,
+        // blocks(),
+        // bombs()
 {
         try {
             //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
