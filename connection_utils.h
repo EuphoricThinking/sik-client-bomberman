@@ -87,7 +87,7 @@ private:
      *  Server -> client -> GUI
      */
     void receive_from_server_send_to_gui() {
-        socket_tcp_.async_read_some(boost::asio::buffer(received_data_server),
+        boost::asio::async_read(socket_tcp_, boost::asio::buffer(received_data_server),
                                     boost::bind(&Client_bomberman::after_receive_from_server,
                                                 this,
                                                 boost::asio::placeholders::error,

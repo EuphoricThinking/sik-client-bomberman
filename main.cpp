@@ -135,7 +135,7 @@ void read_command_line_options(string& temp_gui, string& player_name,
 }
 
 void check_if_alphanumeric(const string& to_be_checked, size_t start) {
-    for (int i = start; i < to_be_checked.length(); i++) {
+    for (size_t i = start; i < to_be_checked.length(); i++) {
         if (!std::isalpha(to_be_checked[i])) {
             cerr << "Port number should include only digits\n";
 
@@ -143,6 +143,7 @@ void check_if_alphanumeric(const string& to_be_checked, size_t start) {
         }
     }
 }
+
 void split_into_host_port(string& host_name, string& host_port, const string& to_be_splitted) {
     size_t position_of_last_colon = to_be_splitted.rfind(host_port_delimiter);
     size_t string_length = to_be_splitted.length();
