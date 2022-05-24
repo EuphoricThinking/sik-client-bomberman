@@ -31,7 +31,7 @@ using std::cout;
 
 using udp_buff_send = boost::array<uint8_t, max_udp_roundup>;
 using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
-using tcp_buff_rec = boost::array<uint8_t, tcp_buff_default>;
+using tcp_buff_rec = uint8_t[tcp_buff_default]; //boost::array<uint8_t, tcp_buff_default>;
 using tcp_buff_send = std::vector<uint8_t>;
 
 void validate_server_mess_id(uint8_t mess) {
