@@ -137,6 +137,8 @@ private:
     std::map<player_id_dt, score_dt> scores;
     std::unordered_set<player_id_dt> death_per_turn_temp;
 
+    string server_name;
+
 
     /*
      *  GUI -> client -> server
@@ -226,7 +228,15 @@ private:
             else {
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
-                        num_bytes_to_read_server = string_length_info;
+                        if (!temp_process_server_mess.is_hello_string_length_read) {
+                            num_bytes_to_read_server = received_data_server[0]; // String to read
+                            temp_process_server_mess.is_hello_string_length_read = true;
+
+                            receive_from_server_send_to_gui();
+                        }
+                        else if (!temp_process_server_mess.is_hello_string_read) {
+
+                        }
 
                         break;
 
