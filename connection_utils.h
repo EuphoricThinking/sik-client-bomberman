@@ -58,7 +58,7 @@ private:
      */
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t) {
-        if (!error) {
+        if (!error || error == boost::asio::error::eof) {
 
         }
 
@@ -101,11 +101,12 @@ private:
     void after_receive_from_server(const boost::system::error_code& error,
                                    std::size_t) {
 
-        if (false) { // If all the message bytes haven't been read; reading has to be continued
-            receive_from_gui_send_to_server();
-        }
-        else {
-            process_data_from_server_send_to_gui();
+        if (!error || error == boost::asio::error::eof) {
+            if (false) { // If all the message bytes haven't been read; reading has to be continued
+                receive_from_gui_send_to_server();
+            } else {
+                process_data_from_server_send_to_gui();
+            }
         }
     }
 
