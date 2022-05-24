@@ -100,18 +100,21 @@ typedef struct ServerMessageData {
     // For both AcceptedPlayer and GameStarted
     bool is_player_header_read = false; // PlayerId and string length
     bool is_player_string_read = false;
-    bool is_player_addres_length_read = false;
+    bool is_player_address_length_read = false;
     bool is_player_address_read = false;
 
     // Turn
     bool is_turn_header_read = false; // Turn number and list length
 
+    bool started_map_read = false;
     size_t map_length = 0;
     size_t map_read_elements = 0;
 
+    bool started_list_read = false;
     size_t list_length = 0;
     size_t list_read_elements = 0;
 
+    bool started_inner_event_list_read = false;
     size_t inner_event_list_length = 0;
     size_t inner_event_list_read_elements = 0;
 
@@ -322,7 +325,7 @@ private:
 
                             receive_from_server_send_to_gui();
                         }
-                        else if (!temp_process_server_mess.is_player_addres_length_read) {
+                        else if (!temp_process_server_mess.is_player_address_length_read) {
                             num_bytes_to_read_server = received_data_server[0];
                             temp_process_server_mess.is_hello_string_length_read = true;
 
@@ -337,13 +340,24 @@ private:
                             players.insert(make_pair(temp_process_server_mess.temp_player_id,
                                                           Player{temp_process_server_mess.temp_player_name,
                                                                  player_address}));
+
+                            temp_process_server_mess.is_player_header_read = false;
+                            temp_process_server_mess.is_player_string_read = false;
+                            temp_process_server_mess.is_player_address_length_read = false;
+                            temp_process_server_mess.is_player_address_read = false;
                         }
 
                         break;
 
                     case (ServerMessage::GameStarted):
-                        num_bytes_to_read_server = map_list_length;
+                        if (!temp_process_server_mess.started_map_read) {
+                            temp_process_server_mess.map_length =
+                                    received_data_server[0];
+                            temp_process_server_mess.started_map_read = true;
+                            num_bytes_to_read_server = player_id_name_header_length;
 
+                            receive_from_server_send_to_gui();
+                        }
                         break;
 
                     case (ServerMessage::Turn):
