@@ -84,6 +84,7 @@ typedef struct GameData {
     uint16_t size_y = 0;
 
     uint16_t game_length = 0;
+    uint16_t turn = 0;
     uint16_t explosion_radius = 0;
     uint16_t bomb_timer = 0;
 } GameData;
@@ -379,7 +380,27 @@ private:
                         break;
 
                     case (ServerMessage::GameEnded):
-                        num_bytes_to_read_server = map_list_length;
+                        if (!temp_process_server_mess.is_turn_header_read) {
+                            game_status.turn =
+                                    big_to_native(*(uint16_t*) received_data_server);
+
+                            move_further_in_buffer += 2;
+                            temp_process_server_mess.list_length =
+                                    big_to_native(*(map_list_dt *)
+                                            (received_data_server + move_further_in_buffer));
+
+                            temp_process_server_mess.is_turn_header_read = true;
+
+                            num_bytes_to_read_server = 1;
+
+                            receive_from_server_send_to_gui();
+                        }
+                        else {
+                            if (temp_process_server_mess.list_read_elements <
+                                    temp_process_server_mess.list_length) {
+
+                            }
+                        }
 
                         break;
                 }

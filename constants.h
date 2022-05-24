@@ -41,6 +41,7 @@ using score_dt = uint32_t;
 using position_dt = uint16_t;
 using bomb_id_dt = uint32_t;
 using timer_dt = uint16_t;
+using map_list_dt = uint32_t;
 
 using pos_x = uint16_t;
 using pos_y = uint16_t;
