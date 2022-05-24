@@ -253,6 +253,37 @@ private:
                     break;
             }
         }
+        else {
+            switch(received_data_server[0]) {
+                case (Events::BombPlaced):
+                    num_bytes_to_read_server = bomb_placed;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::BombExploded):
+                    num_bytes_to_read_server = bomb_id_list_length_header;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::PlayerMoved):
+                    num_bytes_to_read_server = player_id_pos_header;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::BlockPlaced):
+                    num_bytes_to_read_server = position_bytes;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+            }
+        }
     }
     /*
      *  GUI -> client -> server
