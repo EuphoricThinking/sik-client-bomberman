@@ -169,6 +169,50 @@ private:
     string server_name;
     uint8_t send_to_gui_id;
 
+    void add_player_to_map_players(size_t read_bytes) {
+        if (!temp_process_server_mess.is_player_header_read) {
+            temp_process_server_mess.temp_player_id =
+                    received_data_server[0];
+            temp_process_server_mess.is_player_header_read = true;
+
+            //move_further_in_buffer++;
+            num_bytes_to_read_server =
+                    received_data_server[1];
+
+            receive_from_server_send_to_gui();
+        }
+        else if (!temp_process_server_mess.is_player_string_read) {
+            validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                  "Incorrect player name length");
+            temp_process_server_mess.temp_player_name =
+                    std::string(received_data_server, received_data_server + read_bytes);
+            temp_process_server_mess.is_player_string_read = true;
+            num_bytes_to_read_server = 1;
+
+            receive_from_server_send_to_gui();
+        }
+        else if (!temp_process_server_mess.is_player_address_length_read) {
+            num_bytes_to_read_server = received_data_server[0];
+            temp_process_server_mess.is_hello_string_length_read = true;
+
+            receive_from_server_send_to_gui();
+        }
+        else if (!temp_process_server_mess.is_player_address_read) {
+            validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                  "Incorrect player name length");
+            std::string player_address =
+                    std::string(received_data_server, received_data_server + read_bytes);
+
+            players.insert(make_pair(temp_process_server_mess.temp_player_id,
+                                     Player{temp_process_server_mess.temp_player_name,
+                                            player_address}));
+
+            temp_process_server_mess.is_player_header_read = false;
+            temp_process_server_mess.is_player_string_read = false;
+            temp_process_server_mess.is_player_address_length_read = false;
+            temp_process_server_mess.is_player_address_read = false;
+        }
+    }
 
     /*
      *  GUI -> client -> server
@@ -304,48 +348,7 @@ private:
                         break;
 
                     case (ServerMessage::AcceptedPlayer):
-                        if (!temp_process_server_mess.is_player_header_read) {
-                            temp_process_server_mess.temp_player_id =
-                                    received_data_server[0];
-                            temp_process_server_mess.is_player_header_read = true;
-
-                            //move_further_in_buffer++;
-                            num_bytes_to_read_server =
-                                    received_data_server[1];
-
-                            receive_from_server_send_to_gui();
-                        }
-                        else if (!temp_process_server_mess.is_player_string_read) {
-                            validate_data_compare(read_bytes, num_bytes_to_read_server,
-                                                  "Incorrect player name length");
-                            temp_process_server_mess.temp_player_name =
-                                    std::string(received_data_server, received_data_server + read_bytes);
-                            temp_process_server_mess.is_player_string_read = true;
-                            num_bytes_to_read_server = 1;
-
-                            receive_from_server_send_to_gui();
-                        }
-                        else if (!temp_process_server_mess.is_player_address_length_read) {
-                            num_bytes_to_read_server = received_data_server[0];
-                            temp_process_server_mess.is_hello_string_length_read = true;
-
-                            receive_from_server_send_to_gui();
-                        }
-                        else if (!temp_process_server_mess.is_player_address_read) {
-                            validate_data_compare(read_bytes, num_bytes_to_read_server,
-                                                  "Incorrect player name length");
-                            std::string player_address =
-                                    std::string(received_data_server, received_data_server + read_bytes);
-
-                            players.insert(make_pair(temp_process_server_mess.temp_player_id,
-                                                          Player{temp_process_server_mess.temp_player_name,
-                                                                 player_address}));
-
-                            temp_process_server_mess.is_player_header_read = false;
-                            temp_process_server_mess.is_player_string_read = false;
-                            temp_process_server_mess.is_player_address_length_read = false;
-                            temp_process_server_mess.is_player_address_read = false;
-                        }
+                        add_player_to_map_players(read_bytes);
 
                         break;
 
@@ -357,6 +360,16 @@ private:
                             num_bytes_to_read_server = player_id_name_header_length;
 
                             receive_from_server_send_to_gui();
+                        }
+                        else {
+                            if (temp_process_server_mess.map_read_elements <
+                                temp_process_server_mess.map_length) {
+                                    add_player_to_map_players(read_bytes);
+
+                                    temp_process_server_mess.map_read_elements++;
+
+                                    receive_from_server_send_to_gui();
+                            }
                         }
                         break;
 
