@@ -43,6 +43,14 @@ void validate_server_mess_id(uint8_t mess) {
     }
 }
 
+void validate_data_compare(uint64_t should_not_be_smaller, uint64_t should_not_be_greater,
+                           const string& mess) {
+    if (should_not_be_smaller < should_not_be_greater) {
+        cerr << mess << endl;
+
+        exit(1);
+    }
+}
 void validate_event_mess_id(uint8_t mess) {
     if (mess > max_event_mess_id) {
         cerr << "Incorrect event id\n";
@@ -65,6 +73,16 @@ typedef struct Bomb {
     Position coordinates;
     uint16_t timer;
 } Bomb;
+
+typedef struct GameData {
+    uint8_t players_count = 0;
+    uint16_t x = 0;
+    uint16_t y = 0;
+
+    uint16_t game_length = 0;
+    uint16_t explosion_radius = 0;
+    uint16_t bomb_timer = 0;
+} GameData;
 
 typedef struct ServerMessageData {
     uint8_t server_current_message_id = def_no_message;
@@ -235,8 +253,19 @@ private:
                             receive_from_server_send_to_gui();
                         }
                         else if (!temp_process_server_mess.is_hello_string_read) {
+                            validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                            "Error in server name");
+
                             server_name = std::string(received_data_server, received_data_server + read_bytes);
+                            temp_process_server_mess.is_hello_string_read = true;
+                            num_bytes_to_read_server = hello_body_length_without_string;
+
+                            receive_from_server_send_to_gui();
                         }
+                        // Full body is read
+                        validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                              "To little data in Hello\n");
+
 
                         break;
 
