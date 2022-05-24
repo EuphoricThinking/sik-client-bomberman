@@ -11,6 +11,8 @@ using std::string;
 using std::exception;
 using std::strtoll;
 
+using std::size_t;
+
 namespace po = boost::program_options;
 
 void iterate_over_command_line_options(po::variables_map chosen_options) {
@@ -132,6 +134,31 @@ void read_command_line_options(string& temp_gui, string& player_name,
     }
 }
 
+void check_if_alphanumeric(const string& to_be_checked, size_t start) {
+    for (int i = start; i < to_be_checked.length(); i++) {
+        if (!std::isalpha(to_be_checked[i])) {
+            cerr << "Port number should include only digits\n";
+
+            exit(1);
+        }
+    }
+}
+void split_into_host_port(string& host_name, string& host_port, const string& to_be_splitted) {
+    size_t position_of_last_colon = to_be_splitted.rfind(host_port_delimiter);
+    size_t string_length = to_be_splitted.length();
+
+    if (position_of_last_colon == std::string::npos || position_of_last_colon == string_length - 1) {
+        cerr << "Incorrect format\nExpected: <host_name>:<port>\n";
+
+        exit(1);
+    }
+
+    check_if_alphanumeric(to_be_splitted, position_of_last_colon + 1);
+
+    host_name = to_be_splitted.substr(0, position_of_last_colon);
+    host_port = to_be_splitted.substr(position_of_last_colon + 1, string_length - position_of_last_colon);
+}
+
 int main(int argc, char* argv[]) {
 //    std::cout << "Hello, World!" << std::endl;
     string temp_gui;
@@ -139,9 +166,18 @@ int main(int argc, char* argv[]) {
     int64_t port;
     string server_address;
 
+    string host_gui_name;
+    string port_gui;
+
+    string server_name;
+    string port_server;
+
     read_command_line_options(temp_gui, player_name, port, server_address,
                               argc, argv);
     print_saved_arguments(temp_gui, player_name, port, server_address);
+
+    split_into_host_port(temp_gui, host_gui_name, port_gui);
+    split_into_host_port(server_address, server_name, port_server);
 
     return 0;
 }

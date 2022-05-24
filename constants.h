@@ -9,6 +9,7 @@ const int client_number_arguments = 4;
 
 const int u16_max =  65535;
 const int u16_min = 0;
+const char host_port_delimiter = ':';
 
 /*
  *  Client -> Server

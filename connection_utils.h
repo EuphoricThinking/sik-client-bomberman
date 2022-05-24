@@ -119,7 +119,7 @@ private:
         // Repeat the cycle
         receive_from_server_send_to_gui();
     }
-    
+
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
                      const string& gui_port, uint16_t client_port)
