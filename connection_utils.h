@@ -297,7 +297,9 @@ private:
                         break;
 
                     case (ServerMessage::AcceptedPlayer):
-                        num_bytes_to_read_server = player_id_name_header_length;
+                        if (!temp_process_server_mess.is_player_header_read) {
+                            num_bytes_to_read_server = 
+                        }
 
                         break;
 
