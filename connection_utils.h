@@ -125,6 +125,8 @@ typedef struct ServerMessageData {
     bool is_robots_destroyed_read = false;
     bool is_blocks_destroyed_length_read = false;
 
+//    bool is_bomb_placed_read = false;
+
     bool is_read_finished = false;
 } serverMessage;
 /*
@@ -161,7 +163,7 @@ private:
     std::map<player_id_dt, Position> player_positions;
     //std::map<pos_x, std::unordered_set<pos_y>> blocks;
     std::set<std::pair<pos_x, pos_y>> blocks;
-    std::map<std::pair<pos_x, pos_y>, timer_dt> bombs;
+    std::map<bomb_id_dt, Bomb> bombs;
 
     std::set<std::pair<pos_x, pos_y>> explosions_temp;
     std::map<player_id_dt, score_dt> scores;
@@ -225,7 +227,7 @@ private:
 
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
-                    num_bytes_to_read_server = bomb_placed;
+                    num_bytes_to_read_server = bomb_placed_header;
 
                     receive_from_server_send_to_gui();
 
@@ -256,7 +258,20 @@ private:
         else {
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
-                    num_bytes_to_read_server = bomb_placed;
+                    bomb_id_dt temp_bomb_id = big_to_native(*(bomb_id_dt*)
+                                            received_data_server);
+
+                    position_dt x = big_to_native(*(position_dt*)
+                            (received_data_server + bomb_id_bytes));
+                    position_dt y = big_to_native(*(position_dt*)
+                            (received_data_server + 2*bomb_id_bytes));
+
+                    bombs.insert(make_pair(temp_bomb_id,
+                                           Bomb{Position{x, y}, game_status.bomb_timer}));
+
+                    temp_process_server_mess.list_read_elements++;
+                    temp_process_server_mess.event_id = def_no_message;
+                    num_bytes_to_read_server = 1; // event id
 
                     receive_from_server_send_to_gui();
 
