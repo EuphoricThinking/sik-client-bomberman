@@ -34,6 +34,23 @@ using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
 using tcp_buff_rec = boost::array<uint8_t, tcp_buff_default>;
 using tcp_buff_send = std::vector<uint8_t>;
 
+void validate_server_mess_id(uint8_t mess) {
+    // negative values are cast to big positive values
+    if (mess > max_server_mess_id) {
+        cerr << "Incorrect message id\n";
+
+        exit(1);
+    }
+}
+
+void validate_event_mess_id(uint8_t mess) {
+    if (mess > max_event_mess_id) {
+        cerr << "Incorrect event id\n";
+
+        exit(1);
+    }
+}
+
 typedef struct Player {
     string name;
     string address;
@@ -50,7 +67,7 @@ typedef struct Bomb {
 } Bomb;
 
 typedef struct ServerMessageData {
-    int8_t server_current_message_id = -1;
+    uint8_t server_current_message_id = def_no_message;
 
     // Hello
     bool is_hello_string_length_read = false;
@@ -74,7 +91,7 @@ typedef struct ServerMessageData {
     size_t inner_event_list_read_elements = 0;
 
     // Events
-    int8_t event_id = -1;
+    uint8_t event_id = def_no_message;
     bool is_inner_event_header_read = false; // BombId, List PlayerId length
     bool is_robots_destroyed_read = false;
     bool is_blocks_destroyed_length_read = false;
@@ -168,10 +185,39 @@ private:
                                    std::size_t read_bytes) {
 
         if (!error || error == boost::asio::error::eof || read_bytes > 0) { //read_bytes
-            if (temp_process_server_mess.server_current_message_id == - 1) {
+            if (temp_process_server_mess.server_current_message_id == def_no_message) {
                 // Check read one byte
+                validate_server_mess_id(received_data_server[0]);
+
                 temp_process_server_mess.server_current_message_id =
-                        (int8_t)received_data_server[0];
+                        received_data_server[0];
+
+                switch (temp_process_server_mess.server_current_message_id) {
+                    case (ServerMessage::Hello):
+                        num_bytes_to_read_server = string_length_info;
+
+                        break;
+
+                    case (ServerMessage::AcceptedPlayer):
+                        num_bytes_to_read_server = player_id_name_header_length;
+
+                        break;
+
+                    case (ServerMessage::GameStarted):
+                        num_bytes_to_read_server = map_list_length;
+
+                        break;
+
+                    case (ServerMessage::Turn):
+                        num_bytes_to_read_server = turn_header;
+
+                        break;
+
+                    case (ServerMessage::GameEnded):
+                        num_bytes_to_read_server = map_list_length;
+
+                        break;
+                }
             }
 //            if (false) { // If all the message bytes haven't been read; reading has to be continued
 //                receive_from_gui_send_to_server();

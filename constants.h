@@ -14,6 +14,11 @@ const char host_port_delimiter = ':';
 const size_t max_udp_roundup = 65550; //65527;
 const size_t max_input_mess_roundup = 5;
 const size_t tcp_buff_default = 300; // max string length and roundup
+
+const uint8_t def_no_message = 10;
+const uint8_t max_server_mess_id = 4;
+const uint8_t max_event_mess_id = 3;
+
 /*
  *  Server message parts lengths in  bytes
  */
