@@ -26,6 +26,34 @@ using std::cout;
 
 using data = vector<uint8_t>;
 
+typedef struct serverMessage {
+    int server_current_message_id = -1;
+
+    // Hello
+    bool is_hello_string_length_read = false;
+    bool is_hello_string_read = false;
+
+    // For both AcceptedPlayer and GameStarted
+    bool is_player_header_read = false; // PlayerId and string length
+    bool is_player_string_read = false;
+
+    // Turn
+    bool is_turn_header_read = false; // Turn number and list length
+
+    size_t map_lengt = 0;
+    size_t map_read_elements = 0;
+
+    size_t list_length = 0;
+    size_t list_read_elements = 0;
+
+    size_t event_list_length = 0;
+    size_t event_list_read_elements = 0;
+
+    // Events
+    int event_id = -1;
+    bool is_event_header_read = false; // BombId, List PlayerId length
+    bool is_robots_destroyed_read = false;
+} serverMessage;
 /*
  * Acceptor
  * https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/basic_socket_acceptor/bind/overload1.html
@@ -53,39 +81,13 @@ private:
 
     size_t num_bytes_to_read_server;
 
-    uint8_t server_current_message_id;
-
-    // Hello
-    bool is_hello_string_length_read;
-    bool is_hello_string_read;
-
-    // For both AcceptedPlayer and GameStarted
-    bool is_player_header_read; // PlayerId and string length
-    bool is_player_string_read;
-
-    // Turn
-    bool is_turn_header_read; // Turn number and list length
-
-    size_t map_length;
-    size_t map_read_elements;
-
-    size_t list_length;
-    size_t list_read_elements;
-
-    size_t event_list_length;
-    size_t event_list_read_elements;
-
-    // Events
-    uint8_t event_id;
-    bool is_event_header_read; // BombId, List PlayerId length
-    bool is_robots_destroyed_read;
-
+    serverMessage temporary_processing_server_message_data;
 
     /*
      *  GUI -> client -> server
      */
     void process_data_from_gui(const boost::system::error_code& error,
-                               std::size_t) {
+                               std::size_t read_bytes) {
         if (!error || error == boost::asio::error::eof) {
 
         }
@@ -97,7 +99,7 @@ private:
                                              boost::asio::placeholders::bytes_transferred));
     }
 
-    void after_sent_data_to_server(const boost::system::error_code& error,
+    void after_sent_data_to_server([[maybe_unused]] const boost::system::error_code& error,
                                    std::size_t) {
         // Receive from GUI - repeat the cycle
         receive_from_gui_send_to_server();
@@ -127,7 +129,7 @@ private:
     }
 
     void after_receive_from_server(const boost::system::error_code& error,
-                                   std::size_t) {
+                                   std::size_t read_bytes) {
 
         if (!error || error == boost::asio::error::eof) {
             if (false) { // If all the message bytes haven't been read; reading has to be continued
@@ -147,7 +149,7 @@ private:
                                            boost::asio::placeholders::bytes_transferred));
     }
 
-    void after_send_to_gui(const boost::system::error_code& error,
+    void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
                            std::size_t) {
         // Repeat the cycle
         receive_from_server_send_to_gui();
