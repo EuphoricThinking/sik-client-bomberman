@@ -215,6 +215,10 @@ private:
         }
     }
 
+    void read_and_process_bomb_exploded_from_server(size_t read_bytes) {
+        
+    }
+
     /*
      *  GUI -> client -> server
      */
@@ -398,7 +402,10 @@ private:
                         else {
                             if (temp_process_server_mess.list_read_elements <
                                     temp_process_server_mess.list_length) {
+                                if (temp_process_server_mess.inner_event_list_read_elements <
+                                        temp_process_server_mess.inner_event_list_length) {
 
+                                }
                             }
                         }
 
