@@ -95,6 +95,8 @@ typedef struct ServerMessageData {
     bool is_inner_event_header_read = false; // BombId, List PlayerId length
     bool is_robots_destroyed_read = false;
     bool is_blocks_destroyed_length_read = false;
+
+    bool is_read_finished = false;
 } serverMessage;
 /*
  * Acceptor
@@ -192,6 +194,36 @@ private:
                 temp_process_server_mess.server_current_message_id =
                         received_data_server[0];
 
+                switch (temp_process_server_mess.server_current_message_id) {
+                    case (ServerMessage::Hello):
+                        num_bytes_to_read_server = string_length_info;
+
+                        break;
+
+                    case (ServerMessage::AcceptedPlayer):
+                        num_bytes_to_read_server = player_id_name_header_length;
+
+                        break;
+
+                    case (ServerMessage::GameStarted):
+                        num_bytes_to_read_server = map_list_length;
+
+                        break;
+
+                    case (ServerMessage::Turn):
+                        num_bytes_to_read_server = turn_header;
+
+                        break;
+
+                    case (ServerMessage::GameEnded):
+                        num_bytes_to_read_server = map_list_length;
+
+                        break;
+                }
+
+                receive_from_server_send_to_gui();
+            }
+            else {
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
                         num_bytes_to_read_server = string_length_info;
