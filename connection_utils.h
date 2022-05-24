@@ -36,23 +36,25 @@ typedef struct serverMessage {
     // For both AcceptedPlayer and GameStarted
     bool is_player_header_read = false; // PlayerId and string length
     bool is_player_string_read = false;
+    bool is_player_address_read = false;
 
     // Turn
     bool is_turn_header_read = false; // Turn number and list length
 
-    size_t map_lengt = 0;
+    size_t map_length = 0;
     size_t map_read_elements = 0;
 
     size_t list_length = 0;
     size_t list_read_elements = 0;
 
-    size_t event_list_length = 0;
-    size_t event_list_read_elements = 0;
+    size_t inner_event_list_length = 0;
+    size_t inner_event_list_read_elements = 0;
 
     // Events
     int event_id = -1;
-    bool is_event_header_read = false; // BombId, List PlayerId length
+    bool is_inner_event_header_read = false; // BombId, List PlayerId length
     bool is_robots_destroyed_read = false;
+    bool is_blocks_destroyed_length_read = false;
 } serverMessage;
 /*
  * Acceptor
@@ -131,12 +133,15 @@ private:
     void after_receive_from_server(const boost::system::error_code& error,
                                    std::size_t read_bytes) {
 
-        if (!error || error == boost::asio::error::eof) {
-            if (false) { // If all the message bytes haven't been read; reading has to be continued
-                receive_from_gui_send_to_server();
-            } else {
-                process_data_from_server_send_to_gui();
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) { //read_bytes
+            if (temporary_processing_server_message_data.server_current_message_id == - 1) {
+                // Check read one byte
             }
+//            if (false) { // If all the message bytes haven't been read; reading has to be continued
+//                receive_from_gui_send_to_server();
+//            } else {
+//                process_data_from_server_send_to_gui();
+//            }
         }
     }
 

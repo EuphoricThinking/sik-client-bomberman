@@ -12,6 +12,32 @@ const int u16_min = 0;
 const char host_port_delimiter = ':';
 
 /*
+ *  Server message parts lengths in  bytes
+ */
+const size_t hello_body_length_without_string = 11;
+const size_t player_id_name_header_length = 2; // Player id and string length
+const size_t player_id_bytes = 1;
+const size_t map_list_length = 4;
+const size_t string_max_length = 255;
+const size_t string_length_info = 1;
+const size_t turn_header = 6; // turn, list length
+const size_t inner_event_header = 8;
+const size_t player_id_score = 5;
+const size_t bomb_pos_timer = 6;
+
+// dt -> data type, defined type
+using hello_lobby_game_exc_plc_dt = uint16_t;
+using players_count_dt = uint8_t;
+using player_id_dt = uint8_t;
+using score_dt = uint32_t;
+using position_dt = uint16_t;
+using bombId_dt = uint32_t;
+using timer_dt = uint16_t;
+
+using id_dt = uint8_t;
+using direction_dt = uint8_t;
+
+/*
  *  Client -> Server
  */
 
