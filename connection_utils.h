@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
+#include <boost/endian/conversion.hpp>
 #include <iostream>
 
 #include <unordered_set>
@@ -20,6 +21,8 @@
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
 using boost::asio::io_context;
+using boost::endian::big_to_native;
+using boost::endian::native_to_big;
 
 using std::string;
 using std::vector;
@@ -144,6 +147,7 @@ private:
     size_t num_bytes_to_read_server;
 
     ServerMessageData temp_process_server_mess;
+    GameData game_status;
 
     std::map<player_id_dt, Player> players;
     std::map<player_id_dt, Position> player_positions;
@@ -265,6 +269,7 @@ private:
                         // Full body is read
                         validate_data_compare(read_bytes, num_bytes_to_read_server,
                                               "To little data in Hello\n");
+                        game_status.players_count = big_to_native(*(uint8_t*) received_data_server);
 
 
                         break;
