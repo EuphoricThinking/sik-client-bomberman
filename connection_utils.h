@@ -216,9 +216,44 @@ private:
     }
 
     void read_and_process_bomb_exploded_from_server(size_t read_bytes) {
-        
+
     }
 
+    void read_and_process_events(size_t read_bytes) {
+        if (temp_process_server_mess.event_id == def_no_message) {
+            temp_process_server_mess.event_id = received_data_server[0];
+
+            switch(received_data_server[0]) {
+                case (Events::BombPlaced):
+                    num_bytes_to_read_server = bomb_placed;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::BombExploded):
+                    num_bytes_to_read_server = bomb_id_list_length_header;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::PlayerMoved):
+                    num_bytes_to_read_server = player_id_pos_header;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+
+                case (Events::BlockPlaced):
+                    num_bytes_to_read_server = position_bytes;
+
+                    receive_from_server_send_to_gui();
+
+                    break;
+            }
+        }
+    }
     /*
      *  GUI -> client -> server
      */
@@ -395,6 +430,7 @@ private:
 
                             temp_process_server_mess.is_turn_header_read = true;
 
+                            // Read event id
                             num_bytes_to_read_server = 1;
 
                             receive_from_server_send_to_gui();
@@ -404,7 +440,7 @@ private:
                                     temp_process_server_mess.list_length) {
                                 if (temp_process_server_mess.inner_event_list_read_elements <
                                         temp_process_server_mess.inner_event_list_length) {
-
+                                    // Collecting explosions has started
                                 }
                             }
                         }

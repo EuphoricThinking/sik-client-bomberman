@@ -32,6 +32,10 @@ const size_t turn_header = 6; // turn, list length
 const size_t inner_event_header = 8;
 const size_t player_id_score = 5;
 const size_t bomb_pos_timer = 6;
+const size_t bomb_placed = 8;
+const size_t bomb_id_list_length_header = 8;
+const size_t player_id_pos_header = 5;
+const size_t position_bytes = 4;
 
 // dt -> data type, defined type
 using hello_lobby_game_exc_plc_dt = uint16_t;
@@ -142,6 +146,13 @@ enum InputMessage {
     PlaceBombGUI,
     PlaceBlockGUI,
     MoveGUI        // { direction: Direction }
+};
+
+enum Events {
+    BombPlaced, // { id: BombId, position: Position },
+    BombExploded, //{ id: BombId, robots_destroyed: List<PlayerId>, blocks_destroyed: List<Position> },
+    PlayerMoved,  // { id: PlayerId, position: Position },
+    BlockPlaced // { position: Position },
 };
 
 #endif //CLIENT_BOMBERMAN_CONSTANTS_H
