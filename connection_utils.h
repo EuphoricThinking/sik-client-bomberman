@@ -12,6 +12,8 @@
 #include <boost/asio.hpp>
 #include <iostream>
 
+#include <unordered_set>;
+
 #include "constants.h"
 
 using boost::asio::ip::tcp;
@@ -31,7 +33,22 @@ using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
 using tcp_buff_rec = boost::array<uint8_t, tcp_buff_default>;
 using tcp_buff_send = std::vector<uint8_t>;
 
-typedef struct serverMessage {
+typedef struct Player {
+    string name;
+    string address;
+} Player;
+
+typedef struct Position {
+    uint16_t x;
+    uint16_t y;
+} Position;
+
+typedef struct Bomb {
+    Position coordinates;
+    uint16_t timer;
+} Bomb;
+
+typedef struct ServerMessageData {
     int server_current_message_id = -1;
 
     // Hello
@@ -81,14 +98,19 @@ private:
     udp::socket gui_socket_to_receive_;
 
     bool gameStarted;
-    input_mess received_data_gui;
+    input_mess received_data_gui; // TODO will it work with the default constructor?
     tcp_buff_rec received_data_server;
     udp_buff_send data_to_send_gui;
     tcp_buff_send data_to_send_server;
 
     size_t num_bytes_to_read_server;
 
-    serverMessage temporary_processing_server_message_data;
+    ServerMessageData temporary_processing_server_message_data;
+
+    std::map<player_id_dt, Player> players;
+    std::map<player_id_dt, Position> player_positions;
+    std::map<pos_x, std::unordered_set<pos_y>> blocks;
+
 
     /*
      *  GUI -> client -> server

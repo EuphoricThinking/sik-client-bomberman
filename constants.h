@@ -34,8 +34,11 @@ using players_count_dt = uint8_t;
 using player_id_dt = uint8_t;
 using score_dt = uint32_t;
 using position_dt = uint16_t;
-using bombId_dt = uint32_t;
+using bomb_id_dt = uint32_t;
 using timer_dt = uint16_t;
+
+using pos_x = uint16_t;
+using pos_y = uint16_t;
 
 using id_dt = uint8_t;
 using direction_dt = uint8_t;
