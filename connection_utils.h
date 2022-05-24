@@ -53,8 +53,9 @@ private:
 
     size_t num_bytes_to_read_server;
 
-    int server_current_message_id;
+    uint8_t server_current_message_id;
 
+    // Hello
     bool is_hello_string_length_read;
     bool is_hello_string_read;
 
@@ -62,9 +63,22 @@ private:
     bool is_player_header_read; // PlayerId and string length
     bool is_player_string_read;
 
+    // Turn
+    bool is_turn_header_read; // Turn number and list length
+
     size_t map_length;
     size_t map_read_elements;
 
+    size_t list_length;
+    size_t list_read_elements;
+
+    size_t event_list_length;
+    size_t event_list_read_elements;
+
+    // Events
+    uint8_t event_id;
+    bool is_event_header_read; // BombId, List PlayerId length
+    bool is_robots_destroyed_read;
 
 
     /*
