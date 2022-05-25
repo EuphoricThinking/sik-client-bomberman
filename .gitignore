@@ -6,3 +6,4 @@ cmake_install.cmake
 .idea/
 Makefile
 libconnection_utils.a
+testy-zad2/
