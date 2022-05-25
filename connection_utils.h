@@ -520,6 +520,7 @@ private:
 
                     case (ServerMessage::GameStarted):
                         num_bytes_to_read_server = map_list_length;
+                        gameStarted = true;
 
                         break;
 
@@ -705,10 +706,20 @@ private:
 //            } else {
 //                process_data_from_server_send_to_gui();
 //            }
+            if (temp_process_server_mess.server_current_message_id !=
+                ServerMessage::GameStarted) {
+                process_data_from_server_send_to_gui();
+            }
         }
     }
 
     void process_data_from_server_send_to_gui() {
+        uint8_t message_type = temp_process_server_mess.server_current_message_id;
+
+        if (message_type == ServerMessage::Hello || message_type == ServerMessage::GameEnded
+            || message_type == ServerMessage::AcceptedPlayer) {
+
+        }
 
         socket_udp_.async_send(boost::asio::buffer(data_to_send_gui),
                                boost::bind(&Client_bomberman::after_send_to_gui,
