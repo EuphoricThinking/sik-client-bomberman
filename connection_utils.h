@@ -1011,13 +1011,14 @@ public:
             cout << "entered client" << endl;
             boost::asio::ip::tcp::no_delay option(true);
             cout << "Found option" << endl;
-            socket_tcp_.set_option(option);
+            //socket_tcp_.set_option(option);
             cout << "Set option" << endl;
 
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(tcp::v6(), server_name, server_port);
             cout << "tcp resolved" << endl;
             boost::asio::connect(socket_tcp_, server_endpoints_);
+            socket_tcp_.set_option(option);
             cout << "tcp connected" << endl;
 
             udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
