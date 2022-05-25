@@ -641,6 +641,49 @@ private:
         }
     }
 
+    /*
+     *  Hello
+     */
+    void read_server_name_length (const boost::system::error_code& error,
+                                  std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            size_t read_length = received_data_server[0];
+
+            boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(received_data_server,
+                                        read_length),
+                    boost::bind(&Client_bomberman::read_full_server_name_hello,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred));
+        }
+    }
+
+    void read_full_server_name_hello (const boost::system::error_code& error,
+                                  std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                  "Error in server name");
+
+            server_name = std::string(received_data_server, received_data_server + read_bytes);
+
+            boost::asio::async_read(socket_tcp_,
+                boost::asio::buffer(received_data_server,
+                                    hello_body_length_without_string),
+                boost::bind(&Client_bomberman::read_hello_body_without_string,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred));
+        }
+    }
+
+    void read_hello_body_without_string (const boost::system::error_code& error,
+                                 std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, num_bytes_to_read_server,
+                                  "To little data in Hello\n");
+        }
+    }
 
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
