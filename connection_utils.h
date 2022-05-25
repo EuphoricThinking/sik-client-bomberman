@@ -298,8 +298,11 @@ private:
             std::map<player_id_dt, Position>::iterator iterPlayer;
             Position* temp_pos;
 
-            switch(received_data_server[0]) {
+            switch(temp_process_server_mess.event_id) {
                 case (Events::BombPlaced):
+                    validate_data_compare(read_bytes, bomb_placed_header,
+                                          "Incorrect bomb placed message");
+
                     temp_bomb_id = big_to_native(*(bomb_id_dt*)
                                             received_data_server);
 
@@ -326,6 +329,9 @@ private:
                 case (Events::BombExploded):
                     // Determine BombId, get length of the robots destroyed list
                     if (!temp_process_server_mess.is_inner_event_header_read) {
+                        validate_data_compare(read_bytes, bomb_id_list_length_header,
+                                 "Incorrect bomb exploded header");
+
                         temp_bomb_id = big_to_native(*(bomb_id_dt*)
                                 received_data_server);
 
@@ -351,6 +357,7 @@ private:
                         }
                     }
                     else if (!temp_process_server_mess.are_robots_destroyed_read) {
+
                         // Probably this if is possible to delete?
                         // Reading dead players
                         if (temp_process_server_mess.inner_event_list_read_elements <
@@ -469,6 +476,11 @@ private:
         if (!error || error == boost::asio::error::eof) {
             size_t bytes_to_send = 0;
 
+            if (read_bytes > max_input_message_bytes || read_bytes == 0) {
+                cerr << "Incorrect GUI message\n";
+
+                exit(1);
+            }
             if (!gameStarted) {
                 data_to_send_server[0] = ClientMessage::Join;
                 bytes_to_send++;
@@ -481,13 +493,16 @@ private:
 
                 switch (message_type) {
                     case (InputMessage::PlaceBombGUI):
-                        //    dat
+                        validate_data_compare(read_bytes, 1, "Incorrect PlaceBomb gui message\n");
+                        
                         data_to_send_server[0] = ClientMessage::PlaceBomb;
                         bytes_to_send++;
 
                         break;
 
                     case (InputMessage::PlaceBlockGUI):
+                        validate_data_compare(read_bytes, 1, "Incorrect PlaceBlock gui message\n");
+
                         data_to_send_server[0] = ClientMessage::PlaceBlock;
                         bytes_to_send++;
 
