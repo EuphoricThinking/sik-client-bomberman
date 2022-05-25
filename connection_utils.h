@@ -176,7 +176,7 @@ private:
     std::unordered_set<player_id_dt> death_per_turn_temp;
 
     string server_name;
-    uint8_t send_to_gui_id;
+    //uint8_t send_to_gui_id;
     string player_name;
 
     const int list_blocks = 0;
@@ -1001,7 +1001,7 @@ public:
         gameStarted(false),
         num_bytes_to_read_server(1),
         player_positions(),
-        send_to_gui_id(0),
+        // send_to_gui_id(0),
         player_name(player_name)//,
         // blocks(),
         // bombs()
