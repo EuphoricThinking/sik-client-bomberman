@@ -1233,19 +1233,52 @@ private:
 
             if (--num_repetitions > 0) {
                 boost::asio::async_read(socket_tcp_,
-                                        boost::asio::buffer(
-                                                received_data_server,
-                                                message_event_id_bytes),
-                                        boost::bind(
-                                                &Client_bomberman::read_event_id,
-                                                this,
-                                                boost::asio::placeholders::error,
-                                                boost::asio::placeholders::bytes_transferred,
-                                                num_repetitions));
+                    boost::asio::buffer(
+                            received_data_server,
+                            message_event_id_bytes),
+                    boost::bind(
+                            &Client_bomberman::read_event_id,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
             }
             else {
                 update_after_turn();
 
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
+
+    /************* End of Turn *************/
+
+    /*
+     *  Game ended
+     */
+    void read_score_map_length (const boost::system::error_code& error,
+                                std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, map_list_length,
+                                  "GameEnded: incorrect message length");
+
+            map_list_length_dt num_repetitions =
+                    big_to_native(*(map_list_length_dt *)
+                            received_data_server);
+
+            if (num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(
+                            received_data_server,
+                            player_id_score_bytes),
+                    boost::bind(
+                            &Client_bomberman::read_event_id,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
+            }
+            else {
                 process_data_from_server_send_to_gui();
             }
         }
@@ -1490,7 +1523,7 @@ private:
                                     big_to_native(*(map_list_length_dt *)
                                         received_data_server);
                             temp_process_server_mess.is_game_ended_length_read = true;
-                            num_bytes_to_read_server = player_id_score;
+                            num_bytes_to_read_server = player_id_score_bytes;
 
                             receive_from_server_send_to_gui();
                         }
@@ -1701,21 +1734,24 @@ private:
     void process_data_from_server_send_to_gui() {
         uint8_t message_type = temp_process_server_mess.server_current_message_id;
 
-        size_t bytes_to_send = 0;
+        if (message_type != ServerMessage::GameStarted) {
+            size_t bytes_to_send = 0;
 
-        if (message_type == ServerMessage::Hello || message_type == ServerMessage::GameEnded
-            || message_type == ServerMessage::AcceptedPlayer) {
+            if (message_type == ServerMessage::Hello ||
+                message_type == ServerMessage::GameEnded
+                || message_type == ServerMessage::AcceptedPlayer) {
                 bytes_to_send = create_udp_message(true);
-        }
-        else {
+            } else {
                 bytes_to_send = create_udp_message(false);
-        }
+            }
 
-        socket_udp_.async_send(boost::asio::buffer(data_to_send_gui, bytes_to_send),
-                               boost::bind(&Client_bomberman::after_send_to_gui,
-                                           this,
-                                           boost::asio::placeholders::error,
-                                           boost::asio::placeholders::bytes_transferred));
+            socket_udp_.async_send(
+                    boost::asio::buffer(data_to_send_gui, bytes_to_send),
+                    boost::bind(&Client_bomberman::after_send_to_gui,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred));
+        }
     }
 
     void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
