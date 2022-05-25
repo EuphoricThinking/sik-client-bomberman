@@ -728,9 +728,57 @@ private:
         }
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_x));
+        bytes_to_send += lobby_exc_pc_bytes;
 
+        *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_y));
+        bytes_to_send += lobby_exc_pc_bytes;
 
+        *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.game_length));
+        bytes_to_send += lobby_exc_pc_bytes;
 
+        if (!is_Lobby) {
+            *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
+                    game_status.turn));
+            bytes_to_send += lobby_exc_pc_bytes;
+        }
+        else {
+            *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
+                    game_status.explosion_radius));
+            bytes_to_send += lobby_exc_pc_bytes;
+
+            *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
+                    game_status.bomb_timer));
+            bytes_to_send += lobby_exc_pc_bytes;
+        }
+
+        // players: Map<PlayerId, Player>
+        *(uint32_t *) (data_to_send_gui +
+                       bytes_to_send) = (uint32_t)(native_to_big(players.size()));
+        bytes_to_send += map_list_length;
+
+        for (auto & player : players) {
+            data_to_send_gui[bytes_to_send] = (char)player.first; // Player id
+            bytes_to_send++;
+
+            const Player& player_data = player.second;
+            // Player name
+            data_to_send_gui[bytes_to_send] = (char)player_data.name.length();
+            bytes_to_send++;
+
+            strcpy(data_to_send_gui + bytes_to_send, player_data.name.c_str());
+            bytes_to_send += player_data.name.length();
+
+            // Player address
+            data_to_send_gui[bytes_to_send] = (char)player_data.address.length();
+            bytes_to_send++;
+
+            strcpy(data_to_send_gui + bytes_to_send, player_data.address.c_str());
+            bytes_to_send += player_data.address.length();
+        }
+
+        if (!is_Lobby) {
+            
+        }
         return bytes_to_send;
     }
     void process_data_from_server_send_to_gui() {
