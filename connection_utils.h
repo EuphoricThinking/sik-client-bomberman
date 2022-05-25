@@ -563,7 +563,7 @@ private:
 
 
     /*
-     *  Server -> client -> GUI
+     *  Server -> client -> GUI  // TODO NEW
      */
     void receive_from_server_send_to_gui() {
         cout << "RECEIVE FROM SERVER" << endl;
@@ -582,6 +582,7 @@ private:
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             uint8_t message_type = received_data_server[0];
             validate_server_mess_id(message_type);
+            message_id = message_type;
 
             switch (message_type) {
                 case (ServerMessage::Hello):
@@ -1326,7 +1327,7 @@ private:
     }
 
     /******* End of reading server messages ******/
-    
+
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
@@ -1776,7 +1777,8 @@ private:
     }
 
     void process_data_from_server_send_to_gui() {
-        uint8_t message_type = temp_process_server_mess.server_current_message_id;
+        //uint8_t message_type = temp_process_server_mess.server_current_message_id;
+        uint8_t message_type = message_id;
 
         if (message_type != ServerMessage::GameStarted) {
             size_t bytes_to_send = 0;
@@ -1801,14 +1803,15 @@ private:
     void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
                            std::size_t) {
         // Repeat the cycle
-        num_bytes_to_read_server = 1;
-        uint8_t message_type = temp_process_server_mess.server_current_message_id;
+        //num_bytes_to_read_server = 1;
+        //uint8_t message_type = temp_process_server_mess.server_current_message_id;
+        //uint8_t message_type = message_id;
 
-        if (message_type == ServerMessage::Turn) {
+        if (message_id == ServerMessage::Turn) {
             death_per_turn_temp.clear();
             explosions_temp.clear();
         }
-        else if (message_type == ServerMessage::GameEnded) {
+        else if (message_id == ServerMessage::GameEnded) {
             scores.clear();
             bombs.clear();
             blocks.clear();
@@ -1818,7 +1821,7 @@ private:
             gameStarted = false;
         }
 
-        temp_process_server_mess.server_current_message_id = def_no_message;
+        //temp_process_server_mess.server_current_message_id = def_no_message;
 
         receive_from_server_send_to_gui();
     }
