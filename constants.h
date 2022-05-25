@@ -24,6 +24,7 @@ const size_t max_input_message_bytes = 2;
 /*
  *  Server message parts lengths in  bytes
  */
+const size_t message_event_id_bytes = 1;
 const size_t hello_body_length_without_string = 11;
 const size_t player_id_name_header_length = 2; // Player id and string length
 const size_t player_id_bytes = 1;

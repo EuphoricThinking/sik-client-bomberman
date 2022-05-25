@@ -555,6 +555,9 @@ private:
 
 
 
+
+
+
     /*
      *  Server -> client -> GUI
      */
@@ -563,12 +566,81 @@ private:
         cout << "I'm here, bytes to read are: " << num_bytes_to_read_server << endl;
         boost::asio::async_read(socket_tcp_,
                                 boost::asio::buffer(received_data_server,
-                                                    num_bytes_to_read_server),
-                                    boost::bind(&Client_bomberman::after_receive_from_server, //TODO 2 added
+                                                    message_event_id_bytes), //num_bytes_to_read_server),
+                                    boost::bind(&Client_bomberman::check_message_id, //TODO 2 added // after_receive_from_server
                                                 this,
                                                 boost::asio::placeholders::error,
                                                 boost::asio::placeholders::bytes_transferred));
     }
+
+    void check_message_id(const boost::system::error_code& error,
+                                   std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            uint8_t message_type = received_data_server[0];
+            validate_server_mess_id(message_type);
+
+            switch (message_type) {
+                case (ServerMessage::Hello):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(received_data_server,
+                                            string_length_info),
+                        boost::bind(&Client_bomberman::read_server_name_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred));
+
+                    break;
+
+                case (ServerMessage::AcceptedPlayer):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(received_data_server,
+                                            player_id_name_header_length),
+                        boost::bind(&Client_bomberman::read_player_id_and_name_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred,
+                                    1)); // how many times - single player
+
+                    break;
+
+                case (ServerMessage::GameStarted):
+                    gameStarted = true;
+
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(received_data_server,
+                                            map_list_length),
+                        boost::bind(&Client_bomberman::read_player_map_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred)); // how many times - single player
+
+                    break;
+
+                case (ServerMessage::Turn):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(received_data_server,
+                                            turn_header),
+                        boost::bind(&Client_bomberman::read_turn_and_list_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred));
+
+                    break;
+
+                case (ServerMessage::GameEnded):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(received_data_server,
+                                            map_list_length),
+                        boost::bind(&Client_bomberman::read_score_map_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred));
+
+                    break;
+            }
+        }
+    }
+
 
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
@@ -1078,7 +1150,7 @@ public:
         num_bytes_to_read_server(1), //TODO change
         player_positions(),
         // send_to_gui_id(0),
-        player_name(player_name)//,
+        player_name(player_name)//,+
         // blocks(),
         // bombs()
 {
