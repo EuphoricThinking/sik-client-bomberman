@@ -256,14 +256,18 @@ private:
             }
         }
         else {
+            bomb_id_dt temp_bomb_id;
+            position_dt x;
+            position_dt y;
+            
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
-                    bomb_id_dt temp_bomb_id = big_to_native(*(bomb_id_dt*)
+                    temp_bomb_id = big_to_native(*(bomb_id_dt*)
                                             received_data_server);
 
-                    position_dt x = big_to_native(*(position_dt*)
+                    x = big_to_native(*(position_dt*)
                             (received_data_server + bomb_id_bytes));
-                    position_dt y = big_to_native(*(position_dt*)
+                    y = big_to_native(*(position_dt*)
                             (received_data_server + 2*bomb_id_bytes));
 
                     bombs.insert(make_pair(temp_bomb_id,
