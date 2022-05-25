@@ -126,7 +126,7 @@ typedef struct ServerMessageData {
 //    bool is_blocks_destroyed_header_read = false;
     bool is_blocks_destroyed_length_read = false;
 
-    bool game_ended_length_not_read = false;
+    bool is_game_ended_length_read = false;
 
 //    bool is_player_moved_not_read = false;
 
@@ -226,9 +226,12 @@ private:
 
     }
 
+    void update_bomb_
     void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
             temp_process_server_mess.event_id = received_data_server[0];
+
+            validate_event_mess_id(received_data_server[0]);
 
             // Determine event id
             switch(received_data_server[0]) {
@@ -278,15 +281,17 @@ private:
                     x = big_to_native(*(position_dt*)
                             (received_data_server + bomb_id_bytes));
                     y = big_to_native(*(position_dt*)
-                            (received_data_server + 2*bomb_id_bytes));
+                            (received_data_server + bomb_id_bytes + position_bytes));
 
                     bombs.insert(make_pair(temp_bomb_id,
                                            Bomb{Position{x, y}, game_status.bomb_timer}));
 
+                    temp_process_server_mess.event_id = def_no_message;
+                    num_bytes_to_read_server = 1; // event id or message id
+
                     if (++temp_process_server_mess.list_read_elements <
                             temp_process_server_mess.list_length) {
-                        temp_process_server_mess.event_id = def_no_message;
-                        num_bytes_to_read_server = 1; // event id
+                        // next event, otherwise the list is read
 
                         receive_from_server_send_to_gui();
                     }
@@ -307,7 +312,7 @@ private:
                             bombs.erase(temp_bomb_id);
 
                             temp_process_server_mess.inner_event_list_length =
-                                    big_to_native(*(bomb_id_dt*) (received_data_server
+                                    big_to_native(*(map_list_dt *) (received_data_server
                                                 + bomb_id_bytes));
 
                             temp_process_server_mess.is_inner_event_header_read = true;
@@ -328,8 +333,9 @@ private:
                                 death_per_turn_temp.insert(received_data_server[0]);
 
 
+                                // Destroyed robots are read
                                 if (++temp_process_server_mess.inner_event_list_read_elements
-                                    == temp_process_server_mess.inner_event_list_length) {
+                                    >= temp_process_server_mess.inner_event_list_length) {
                                         num_bytes_to_read_server = map_list_length;
                                         temp_process_server_mess.are_robots_destroyed_read = true;
 
@@ -348,26 +354,32 @@ private:
                         receive_from_server_send_to_gui();
                     }
                     else {
-                        // Reading destoryed blocks positions
+                        // Reading destroyed blocks positions
                         if (temp_process_server_mess.inner_event_list_read_elements <
                             temp_process_server_mess.inner_event_list_length) {
                             x = big_to_native(*(position_dt*)
-                                    (received_data_server + bomb_id_bytes));
+                                    (received_data_server));
                             y = big_to_native(*(position_dt*)
-                                    (received_data_server + 2*bomb_id_bytes));
+                                    (received_data_server + position_bytes));
 
                             blocks.erase(make_pair(x, y));
                             explosions_temp.insert(make_pair(x, y));
 
                             if (++temp_process_server_mess.inner_event_list_read_elements
-                                == temp_process_server_mess.inner_event_list_length) {
+                                >= temp_process_server_mess.inner_event_list_length) {
                                 // Finished full event
+                                temp_process_server_mess.inner_event_list_length = 0;
+                                temp_process_server_mess.inner_event_list_read_elements = 0;
+                                num_bytes_to_read_server = 1;
+
+                                temp_process_server_mess.is_inner_event_header_read = false;
+                                temp_process_server_mess.are_robots_destroyed_read = false;
+                                temp_process_server_mess.is_blocks_destroyed_length_read = false;
+                                temp_process_server_mess.event_id = def_no_message;
+
                                 if (++temp_process_server_mess.list_read_elements
                                     != temp_process_server_mess.list_length) {
                                     // Isn't the last element
-                                    temp_process_server_mess.inner_event_list_length = 0;
-                                    temp_process_server_mess.inner_event_list_read_elements = 0;
-                                    num_bytes_to_read_server = 1;
 
                                     receive_from_server_send_to_gui();
                                 }
@@ -375,16 +387,16 @@ private:
                         }
                     }
 
-                    receive_from_server_send_to_gui();
+                    // receive_from_server_send_to_gui();
 
                     break;
 
                 case (Events::PlayerMoved):
                     player_id = big_to_native(*(player_id_dt *) received_data_server);
                     x = big_to_native(*(position_dt*)
-                            (received_data_server + bomb_id_bytes));
+                            (received_data_server + player_id_bytes));
                     y = big_to_native(*(position_dt*)
-                            (received_data_server + 2*bomb_id_bytes));
+                            (received_data_server + player_id_bytes + position_bytes));
 
                     iterPlayer = player_positions.find(player_id);
                     if (iterPlayer != player_positions.end()) {
@@ -392,10 +404,11 @@ private:
                         temp_pos->x = x;
                         temp_pos->y = y;
 
+                        temp_process_server_mess.event_id = def_no_message;
+                        num_bytes_to_read_server = 1; // Next message or event id
                         if (++temp_process_server_mess.list_read_elements
                             != temp_process_server_mess.list_length) {
                             // Isn't the last element
-                            num_bytes_to_read_server = 1;
 
                             receive_from_server_send_to_gui();
                         }
@@ -405,15 +418,16 @@ private:
 
                 case (Events::BlockPlaced):
                     x = big_to_native(*(position_dt*)
-                            (received_data_server + bomb_id_bytes));
+                            (received_data_server));
                     y = big_to_native(*(position_dt*)
-                            (received_data_server + 2*bomb_id_bytes));
+                            (received_data_server + position_bytes));
                     blocks.insert(make_pair(x, y));
 
+                    temp_process_server_mess.event_id = def_no_message;
+                    num_bytes_to_read_server = 1; // Message or event id
                     if (++temp_process_server_mess.list_read_elements
                         != temp_process_server_mess.list_length) {
                         // Isn't the last element
-                        num_bytes_to_read_server = 1;
 
                         receive_from_server_send_to_gui();
                     }
@@ -582,14 +596,15 @@ private:
                         break;
 
                     case (ServerMessage::Turn):
+                        // Turn number and events list length are not read
                         if (!temp_process_server_mess.is_turn_header_read) {
                             game_status.turn =
                                     big_to_native(*(uint16_t*) received_data_server);
 
-                            move_further_in_buffer += 2;
+                            //move_further_in_buffer += 2;
                             temp_process_server_mess.list_length =
                                     big_to_native(*(map_list_dt *)
-                                            (received_data_server + move_further_in_buffer));
+                                            (received_data_server + 2)); //move_further_in_buffer));
 
                             temp_process_server_mess.is_turn_header_read = true;
 
@@ -601,22 +616,31 @@ private:
                         else {
                             if (temp_process_server_mess.list_read_elements <
                                     temp_process_server_mess.list_length) {
-
+                                read_and_process_events(read_bytes);
                             }
+
+                            // Returned from read_and_process_events() instead of
+                            // calling receive_from_server_send_to_gui()
+                            temp_process_server_mess.is_turn_header_read = false;
+                            temp_process_server_mess.list_read_elements = 0;
+                            temp_process_server_mess.list_length = 0;
                         }
 
                         break;
 
                     case (ServerMessage::GameEnded):
-                        if (!temp_process_server_mess.game_ended_length_not_read) {
-                            //TODO
+                        // Reading map length
+                        if (!temp_process_server_mess.is_game_ended_length_read) {
                             temp_process_server_mess.map_length =
                                     big_to_native(*(map_list_dt *)
                                         received_data_server);
-                            temp_process_server_mess.game_ended_length_not_read = true;
+                            temp_process_server_mess.is_game_ended_length_read = true;
                             num_bytes_to_read_server = player_id_score;
+
+                            receive_from_server_send_to_gui();
                         }
 
+                        // Reading elements
                         if (temp_process_server_mess.map_read_elements <
                                 temp_process_server_mess.map_length) {
                             player_id_dt player_id = received_data_server[0];
@@ -632,6 +656,11 @@ private:
                             if (++temp_process_server_mess.map_read_elements <
                                     temp_process_server_mess.map_length) {
                                 receive_from_server_send_to_gui();
+                            }
+                            else {
+                                temp_process_server_mess.is_game_ended_length_read = false;
+                                temp_process_server_mess.map_length = 0;
+                                temp_process_server_mess.map_read_elements = 0;
                             }
 
                         }
