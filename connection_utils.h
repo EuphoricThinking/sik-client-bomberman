@@ -402,9 +402,19 @@ private:
                     break;
 
                 case (Events::BlockPlaced):
-                    num_bytes_to_read_server = position_bytes;
+                    x = big_to_native(*(position_dt*)
+                            (received_data_server + bomb_id_bytes));
+                    y = big_to_native(*(position_dt*)
+                            (received_data_server + 2*bomb_id_bytes));
+                    blocks.insert(make_pair(x, y));
 
-                    receive_from_server_send_to_gui();
+                    if (++temp_process_server_mess.list_read_elements
+                        != temp_process_server_mess.list_length) {
+                        // Isn't the last element
+                        num_bytes_to_read_server = 1;
+
+                        receive_from_server_send_to_gui();
+                    }
 
                     break;
             }
