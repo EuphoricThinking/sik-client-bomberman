@@ -222,11 +222,24 @@ private:
         }
     }
 
-    void read_and_process_bomb_exploded_from_server(size_t read_bytes) {
-
+    void read_and_process_bomb_exploded_from_server() {
+        // TODO test whether it works
+        for (auto iter = bombs.begin(); iter != bombs.end(); iter++) {
+            Bomb& bomb_data = iter->second;
+            bomb_data.timer--;
+        }
     }
 
-    void update_bomb_
+    void update_player_scores() {
+        for (auto dead_player : death_per_turn_temp) {
+            auto player_score = scores.find(dead_player);
+            player_score->second++;
+        }
+    }
+
+    void update_bomb_timers() {
+
+    }
     void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
             temp_process_server_mess.event_id = received_data_server[0];
@@ -624,6 +637,9 @@ private:
                             temp_process_server_mess.is_turn_header_read = false;
                             temp_process_server_mess.list_read_elements = 0;
                             temp_process_server_mess.list_length = 0;
+
+                            update_bomb_timers();
+                            update_player_scores();
                         }
 
                         break;
