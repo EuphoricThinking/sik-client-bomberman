@@ -37,6 +37,7 @@ const size_t bomb_id_list_length_header = 8;
 const size_t player_id_pos_header = 5;
 const size_t position_bytes = 4;
 const size_t bomb_id_bytes = 4;
+const size_t turn_bytes = 2;
 
 // dt -> data type, defined type
 using hello_lobby_game_exc_plc_dt = uint16_t;

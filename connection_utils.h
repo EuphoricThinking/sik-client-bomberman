@@ -560,7 +560,8 @@ private:
                         // Full body is read
                         validate_data_compare(read_bytes, num_bytes_to_read_server,
                                               "To little data in Hello\n");
-                        game_status.players_count = (*(uint8_t*) received_data_server);
+                        // game_status.players_count = (*(uint8_t*) received_data_server);
+                        game_status.players_count = received_data_server[0];
 
                         move_further_in_buffer++;
                         game_status.size_x = big_to_native(*(uint16_t*)
@@ -581,6 +582,10 @@ private:
                         move_further_in_buffer += 2;
                         game_status.bomb_timer = big_to_native(*(uint16_t*)
                                 (received_data_server + move_further_in_buffer));
+
+                        move_further_in_buffer = 0;
+                        temp_process_server_mess.is_hello_string_length_read = false;
+                        temp_process_server_mess.is_hello_string_read = false;
 
                         break;
 
@@ -627,7 +632,7 @@ private:
                             //move_further_in_buffer += 2;
                             temp_process_server_mess.list_length =
                                     big_to_native(*(map_list_dt *)
-                                            (received_data_server + 2)); //move_further_in_buffer));
+                                            (received_data_server + turn_bytes)); //move_further_in_buffer));
 
                             temp_process_server_mess.is_turn_header_read = true;
 
