@@ -180,13 +180,13 @@ int main(int argc, char* argv[]) {
 
     read_command_line_options(temp_gui, player_name, port, temp_server_address,
                               argc, argv);
-    print_saved_arguments(temp_gui, player_name, port, temp_server_address);
+    // print_saved_arguments(temp_gui, player_name, port, temp_server_address);
 
     // cout << "beliar" << endl;
     split_into_host_port(temp_gui, host_gui_name, port_gui);
     split_into_host_port(temp_server_address, server_name, port_server);
-    cout << host_gui_name << " " << port_gui << endl;
-    cout << server_name << " " << port_server << endl;
+    // cout << host_gui_name << " " << port_gui << endl;
+    // cout << server_name << " " << port_server << endl;
 
     io_context io;
     Client_bomberman client(io, server_name, port_server, host_gui_name,

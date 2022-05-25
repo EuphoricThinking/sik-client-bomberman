@@ -1008,18 +1008,24 @@ public:
 {
         try {
             //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
+            cout << "entered client" << endl;
             boost::asio::ip::tcp::no_delay option(true);
+            cout << "Found option" << endl;
             socket_tcp_.set_option(option);
+            cout << "Set option" << endl;
 
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(tcp::v6(), server_name, server_port);
+            cout << "tcp resolved" << endl;
             boost::asio::connect(socket_tcp_, server_endpoints_);
+            cout << "tcp connected" << endl;
 
             udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
             //socket_udp_.open(udp::v6());
+            cout << "udp endpoints resolved\n";
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
-
+            cout << "udp connected" << endl;
             //udp::resolver res(io_context)
             //auto endpoints = res.resolve(host, port)
             //gui_output.open(udp::v6())
