@@ -177,6 +177,10 @@ private:
     string server_name;
     uint8_t send_to_gui_id;
 
+    const int list_blocks = 0;
+    const int list_bombs = 1;
+    const int list_explosions = 2;
+
     const int map_players = 0;
     const int map_positions = 1;
     const int map_score = 2;
@@ -724,7 +728,6 @@ private:
 
         *(uint32_t *) (data_to_send_gui +
                        bytes_to_send) = (uint32_t)(native_to_big(size_to_send));
-
         bytes_to_send += map_list_length;
 
         if (map_type == map_players) {
@@ -768,12 +771,57 @@ private:
                 data_to_send_gui[bytes_to_send] = (char)player_score.first;
                 bytes_to_send++;
 
-                *(score_dt *)data_to_send_gui = native_to_big(player_score.second);
+                *(score_dt *)(data_to_send_gui + bytes_to_send) = native_to_big(player_score.second);
                 bytes_to_send += score_bytes;
             }
         }
     }
-    
+
+    void write_list_to_buffer(size_t& bytes_to_send, int list_type) {
+        size_t length_to_send = blocks.size();
+        if (list_type == list_explosions) length_to_send = explosions_temp.size();
+        else if (list_type == list_bombs) length_to_send = bombs.size();
+
+        *(uint32_t *) (data_to_send_gui +
+                       bytes_to_send) = (uint32_t)(native_to_big(length_to_send));
+        bytes_to_send += map_list_length;
+
+        if (list_type == list_blocks) {
+            for (const auto & block : blocks) {
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(block.first);
+                bytes_to_send += single_position_bytes;
+
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(block.second);
+                bytes_to_send += single_position_bytes;
+            }
+        }
+        else if (list_type == list_bombs) {
+            for (const auto & bomb : bombs) {
+                *(bomb_id_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(bomb.first);
+                bytes_to_send += bomb_id_bytes;
+
+                Position bomb_position = bomb.second.coordinates;
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(bomb_position.x);
+                bytes_to_send += single_position_bytes;
+
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(bomb_position.y);
+                bytes_to_send += single_position_bytes;
+
+                *(timer_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(bomb.second.timer);
+                bytes_to_send += timer_bytes;
+            }
+        }
+        else if (list_type == list_explosions) {
+            
+        }
+
+    }
     size_t create_udp_message(bool is_Lobby) {
         size_t bytes_to_send = 0;
 
