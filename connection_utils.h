@@ -126,6 +126,8 @@ typedef struct ServerMessageData {
 //    bool is_blocks_destroyed_header_read = false;
     bool is_blocks_destroyed_length_read = false;
 
+//    bool is_player_moved_not_read = false;
+
 //    bool is_bomb_placed_read = false;
 
     bool is_read_finished = false;
@@ -262,6 +264,9 @@ private:
             position_dt x;
             position_dt y;
             std::map<bomb_id_dt, Bomb>::iterator iterBomb;
+            player_id_dt player_id;
+            std::map<player_id_dt, Position>::iterator iterPlayer;
+            Position* temp_pos;
 
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
@@ -358,7 +363,9 @@ private:
                                 if (++temp_process_server_mess.list_read_elements
                                     != temp_process_server_mess.list_length) {
                                     // Isn't the last element
+                                    temp_process_server_mess.inner_event_list_length = 0;
                                     temp_process_server_mess.inner_event_list_read_elements = 0;
+                                    num_bytes_to_read_server = 1;
 
                                     receive_from_server_send_to_gui();
                                 }
@@ -371,9 +378,26 @@ private:
                     break;
 
                 case (Events::PlayerMoved):
-                    num_bytes_to_read_server = player_id_pos_header;
+                    player_id = big_to_native(*(player_id_dt *) received_data_server);
+                    x = big_to_native(*(position_dt*)
+                            (received_data_server + bomb_id_bytes));
+                    y = big_to_native(*(position_dt*)
+                            (received_data_server + 2*bomb_id_bytes));
 
-                    receive_from_server_send_to_gui();
+                    iterPlayer = player_positions.find(player_id);
+                    if (iterPlayer != player_positions.end()) {
+                        temp_pos = &(iterPlayer->second);
+                        temp_pos->x = x;
+                        temp_pos->y = y;
+
+                        if (++temp_process_server_mess.list_read_elements
+                            != temp_process_server_mess.list_length) {
+                            // Isn't the last element
+                            num_bytes_to_read_server = 1;
+
+                            receive_from_server_send_to_gui();
+                        }
+                    }
 
                     break;
 
