@@ -1189,13 +1189,22 @@ private:
                 temp_pos.x = x;
                 temp_pos.y = y;
 
-                temp_process_server_mess.event_id = def_no_message;
-                num_bytes_to_read_server = 1; // Next message or event id
-                if (++temp_process_server_mess.list_read_elements
-                    != temp_process_server_mess.list_length) {
-                    // Isn't the last element
+                if (--num_repetitions > 0) {
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                message_event_id_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_event_id,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+                }
+                else {
+                    update_after_turn();
 
-                    receive_from_server_send_to_gui();
+                    process_data_from_server_send_to_gui();
                 }
             }
             else {
