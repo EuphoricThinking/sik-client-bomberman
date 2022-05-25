@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include "constants.h"
+#include "connection_utils.h"
 
 using std::string;
 using std::cout;
@@ -10,6 +11,8 @@ using std::cerr;
 using std::string;
 using std::exception;
 using std::strtoll;
+
+using boost::asio::io_context;
 
 using std::size_t;
 
@@ -100,8 +103,8 @@ void read_command_line_options(string& temp_gui, string& player_name,
         po::variables_map chosen_options;
         po::store(po::parse_command_line(argc, argv, desc), chosen_options);
         po::notify(chosen_options);
-        cout << chosen_options.size() << " const: " << client_number_arguments
-             << endl;
+//        cout << chosen_options.size() << " const: " << client_number_arguments
+//             << endl;
 
         if (chosen_options.count("help")) {
             cout << desc << endl;
@@ -112,7 +115,7 @@ void read_command_line_options(string& temp_gui, string& player_name,
 
             exit(1);
         } else {
-            iterate_over_command_line_options(chosen_options);
+            // iterate_over_command_line_options(chosen_options);
 
             temp_gui = chosen_options["gui-address"].as<string>();
             player_name = chosen_options["player-name"].as<string>();
@@ -164,11 +167,10 @@ void split_into_host_port(const string& to_be_splitted, string& host_name, strin
 }
 
 int main(int argc, char* argv[]) {
-//    std::cout << "Hello, World!" << std::endl;
     string temp_gui;
     string player_name;
     int64_t port;
-    string server_address;
+    string temp_server_address;
 
     string host_gui_name;
     string port_gui;
@@ -176,15 +178,20 @@ int main(int argc, char* argv[]) {
     string server_name;
     string port_server;
 
-    read_command_line_options(temp_gui, player_name, port, server_address,
+    read_command_line_options(temp_gui, player_name, port, temp_server_address,
                               argc, argv);
-    print_saved_arguments(temp_gui, player_name, port, server_address);
+    print_saved_arguments(temp_gui, player_name, port, temp_server_address);
 
-    cout << "beliar" << endl;
+    // cout << "beliar" << endl;
     split_into_host_port(temp_gui, host_gui_name, port_gui);
-    split_into_host_port(server_address, server_name, port_server);
+    split_into_host_port(temp_server_address, server_name, port_server);
     cout << host_gui_name << " " << port_gui << endl;
     cout << server_name << " " << port_server << endl;
+
+    io_context io;
+    Client_bomberman client(io, server_name, port_server, host_gui_name,
+                            port_gui, (uint16_t)port, player_name);
+    io.run();
 
     return 0;
 }
