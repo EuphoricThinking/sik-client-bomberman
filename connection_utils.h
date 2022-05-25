@@ -177,6 +177,10 @@ private:
     string server_name;
     uint8_t send_to_gui_id;
 
+    const int map_players = 0;
+    const int map_positions = 1;
+    const int map_score = 2;
+
     void add_player_to_map_players(size_t read_bytes) {
         if (!temp_process_server_mess.is_player_header_read) {
             temp_process_server_mess.temp_player_id =
@@ -713,6 +717,63 @@ private:
         }
     }
 
+    void write_map_to_buffer(size_t& bytes_to_send, int map_type) {
+        size_t size_to_send = players.size();
+        if (map_type == map_positions) size_to_send = player_positions.size();
+        else if (map_type == map_score) size_to_send = scores.size();
+
+        *(uint32_t *) (data_to_send_gui +
+                       bytes_to_send) = (uint32_t)(native_to_big(size_to_send));
+
+        bytes_to_send += map_list_length;
+
+        if (map_type == map_players) {
+            for (auto &player: players) {
+                data_to_send_gui[bytes_to_send] = (char) player.first; // Player id
+                bytes_to_send++;
+
+                const Player &player_data = player.second;
+                // Player name
+                data_to_send_gui[bytes_to_send] = (char) player_data.name.length();
+                bytes_to_send++;
+
+                strcpy(data_to_send_gui + bytes_to_send,
+                       player_data.name.c_str());
+                bytes_to_send += player_data.name.length();
+
+                // Player address
+                data_to_send_gui[bytes_to_send] = (char) player_data.address.length();
+                bytes_to_send++;
+
+                strcpy(data_to_send_gui + bytes_to_send,
+                       player_data.address.c_str());
+                bytes_to_send += player_data.address.length();
+            }
+        }
+        else if (map_type == map_positions) {
+            for (auto & player_position : player_positions) {
+                Position current_position = player_position.second;
+
+                *(uint16_t *) (data_to_send_gui +
+                               bytes_to_send) = (native_to_big(current_position.x));
+                bytes_to_send += position_bytes;
+
+                *(uint16_t *) (data_to_send_gui +
+                               bytes_to_send) = (native_to_big(current_position.y));
+                bytes_to_send += position_bytes;
+            }
+        }
+        else if (map_type == map_score) {
+            for (auto & player_score : scores) {
+                data_to_send_gui[bytes_to_send] = (char)player_score.first;
+                bytes_to_send++;
+
+                *(score_dt *)data_to_send_gui = native_to_big(player_score.second);
+                bytes_to_send += score_bytes;
+            }
+        }
+    }
+    
     size_t create_udp_message(bool is_Lobby) {
         size_t bytes_to_send = 0;
 
@@ -752,29 +813,7 @@ private:
         }
 
         // players: Map<PlayerId, Player>
-        *(uint32_t *) (data_to_send_gui +
-                       bytes_to_send) = (uint32_t)(native_to_big(players.size()));
-        bytes_to_send += map_list_length;
 
-        for (auto & player : players) {
-            data_to_send_gui[bytes_to_send] = (char)player.first; // Player id
-            bytes_to_send++;
-
-            const Player& player_data = player.second;
-            // Player name
-            data_to_send_gui[bytes_to_send] = (char)player_data.name.length();
-            bytes_to_send++;
-
-            strcpy(data_to_send_gui + bytes_to_send, player_data.name.c_str());
-            bytes_to_send += player_data.name.length();
-
-            // Player address
-            data_to_send_gui[bytes_to_send] = (char)player_data.address.length();
-            bytes_to_send++;
-
-            strcpy(data_to_send_gui + bytes_to_send, player_data.address.c_str());
-            bytes_to_send += player_data.address.length();
-        }
 
         if (!is_Lobby) {
             // Player position
