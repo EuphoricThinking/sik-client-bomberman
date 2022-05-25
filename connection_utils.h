@@ -829,7 +829,7 @@ private:
             }
         }
     }
-    
+
     size_t create_udp_message(bool is_Lobby) {
         size_t bytes_to_send = 0;
 
@@ -869,13 +869,20 @@ private:
         }
 
         // players: Map<PlayerId, Player>
-
+        write_map_to_buffer(bytes_to_send, map_players);
 
         if (!is_Lobby) {
             // Player position
+            write_map_to_buffer(bytes_to_send, map_positions);
+            write_list_to_buffer(bytes_to_send, list_blocks);
+            write_list_to_buffer(bytes_to_send, list_bombs);
+            write_list_to_buffer(bytes_to_send, list_explosions);
+            write_map_to_buffer(bytes_to_send, map_score);
         }
+
         return bytes_to_send;
     }
+    
     void process_data_from_server_send_to_gui() {
         uint8_t message_type = temp_process_server_mess.server_current_message_id;
 
