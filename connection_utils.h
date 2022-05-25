@@ -187,6 +187,8 @@ private:
     const int map_positions = 1;
     const int map_score = 2;
 
+    Client_bomberman(const Client_bomberman&) = delete;
+
     void add_player_to_map_players(size_t read_bytes) {
         if (!temp_process_server_mess.is_player_header_read) {
             temp_process_server_mess.temp_player_id =
@@ -562,7 +564,7 @@ private:
         boost::asio::async_read(socket_tcp_,
                                 boost::asio::buffer(received_data_server,
                                                     num_bytes_to_read_server),
-                                    boost::bind(&Client_bomberman::after_receive_from_server,
+                                    boost::bind(&Client_bomberman::after_receive_from_server, //TODO 2 added
                                                 this,
                                                 boost::asio::placeholders::error,
                                                 boost::asio::placeholders::bytes_transferred));
@@ -601,6 +603,18 @@ private:
                                        std::size_t read_bytes) {
         cout << "i have read for a string: " << read_bytes << endl;
         server_name = std::string(received_data_server, received_data_server + read_bytes);
+        cout << server_name << endl;
+
+        boost::asio::async_read(socket_tcp_,
+                                boost::asio::buffer(received_data_server,
+                                                    hello_body_length_without_string),
+                                boost::bind(&Client_bomberman::after_receive_from_server_hel3,
+                                            this,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    }
+    void after_receive_from_server_hel3([[maybe_unused]] const boost::system::error_code& error,
+                                        [[maybe_unused]] std::size_t read_bytes) {
         cout << server_name << endl;
     }
 
@@ -658,16 +672,16 @@ private:
                             cout << "FIRST Save string hello length: " << (int)received_data_server[0] << endl;
                             num_bytes_to_read_server = received_data_server[0]; // String to read
                             temp_process_server_mess.is_hello_string_length_read = true;
-                             size_t kurwaaaa = num_bytes_to_read_server;
-
-                            boost::asio::async_read(socket_tcp_,
-                                                    boost::asio::buffer(received_data_server,
-                                                                        kurwaaaa),
-                                                    boost::bind(&Client_bomberman::after_receive_from_server,
-                                                                this,
-                                                                boost::asio::placeholders::error,
-                                                                boost::asio::placeholders::bytes_transferred));
-                            return;
+//                             size_t kurwaaaa = num_bytes_to_read_server;
+//
+//                            boost::asio::async_read(socket_tcp_,
+//                                                    boost::asio::buffer(received_data_server,
+//                                                                        kurwaaaa),
+//                                                    boost::bind(&Client_bomberman::after_receive_from_server,
+//                                                                this,
+//                                                                boost::asio::placeholders::error,
+//                                                                boost::asio::placeholders::bytes_transferred));
+//                            return;
 
 
                             receive_from_server_send_to_gui();
@@ -1061,7 +1075,7 @@ public:
         socket_udp_(io),
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false),
-        num_bytes_to_read_server(1), //TODO change
+        num_bytes_to_read_server(5), //TODO change
         player_positions(),
         // send_to_gui_id(0),
         player_name(player_name)//,
