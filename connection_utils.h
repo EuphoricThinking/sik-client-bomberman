@@ -777,7 +777,7 @@ private:
         }
 
         if (!is_Lobby) {
-            
+            // Player position
         }
         return bytes_to_send;
     }
