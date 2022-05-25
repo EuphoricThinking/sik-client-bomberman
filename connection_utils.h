@@ -882,7 +882,7 @@ private:
 
         return bytes_to_send;
     }
-    
+
     void process_data_from_server_send_to_gui() {
         uint8_t message_type = temp_process_server_mess.server_current_message_id;
 
@@ -890,11 +890,13 @@ private:
 
         if (message_type == ServerMessage::Hello || message_type == ServerMessage::GameEnded
             || message_type == ServerMessage::AcceptedPlayer) {
-
-
+                bytes_to_send = create_udp_message(true);
+        }
+        else {
+                bytes_to_send = create_udp_message(false);
         }
 
-        socket_udp_.async_send(boost::asio::buffer(data_to_send_gui),
+        socket_udp_.async_send(boost::asio::buffer(data_to_send_gui, bytes_to_send),
                                boost::bind(&Client_bomberman::after_send_to_gui,
                                            this,
                                            boost::asio::placeholders::error,
