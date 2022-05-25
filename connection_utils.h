@@ -102,12 +102,12 @@ typedef struct ServerMessageData {
     bool is_player_header_read = false; // PlayerId and string length
     bool is_player_string_read = false;
     bool is_player_address_length_read = false;
-    bool is_player_address_read = false;
+//    bool is_player_address_read = false;
 
     // Turn
     bool is_turn_header_read = false; // Turn number and list length
 
-    bool started_map_read = false;
+    bool game_started_map_read = false;
     size_t map_length = 0;
     size_t map_read_elements = 0;
 
@@ -189,6 +189,7 @@ private:
 
             receive_from_server_send_to_gui();
         }
+        // Player name is saved in buffer
         else if (!temp_process_server_mess.is_player_string_read) {
             validate_data_compare(read_bytes, num_bytes_to_read_server,
                                   "Incorrect player name length");
@@ -201,11 +202,11 @@ private:
         }
         else if (!temp_process_server_mess.is_player_address_length_read) {
             num_bytes_to_read_server = received_data_server[0];
-            temp_process_server_mess.is_hello_string_length_read = true;
+//            temp_process_server_mess.is_player_address_length_read = true;
 
             receive_from_server_send_to_gui();
         }
-        else if (!temp_process_server_mess.is_player_address_read) {
+        else { //if (!temp_process_server_mess.is_player_address_read) {
             validate_data_compare(read_bytes, num_bytes_to_read_server,
                                   "Incorrect player name length");
             std::string player_address =
@@ -218,7 +219,8 @@ private:
             temp_process_server_mess.is_player_header_read = false;
             temp_process_server_mess.is_player_string_read = false;
             temp_process_server_mess.is_player_address_length_read = false;
-            temp_process_server_mess.is_player_address_read = false;
+            num_bytes_to_read_server = 1; // Next player id or message id
+            // temp_process_server_mess.is_player_address_read = false;
         }
     }
 
@@ -588,10 +590,10 @@ private:
                         break;
 
                     case (ServerMessage::GameStarted):
-                        if (!temp_process_server_mess.started_map_read) {
+                        if (!temp_process_server_mess.game_started_map_read) {
                             temp_process_server_mess.map_length =
                                     received_data_server[0];
-                            temp_process_server_mess.started_map_read = true;
+                            temp_process_server_mess.game_started_map_read = true;
                             num_bytes_to_read_server = player_id_name_header_length;
 
                             receive_from_server_send_to_gui();
@@ -601,11 +603,19 @@ private:
                                 temp_process_server_mess.map_length) {
                                     add_player_to_map_players(read_bytes);
 
-                                    temp_process_server_mess.map_read_elements++;
+                                    if (++temp_process_server_mess.map_read_elements <
+                                            temp_process_server_mess.map_length) {
 
-                                    receive_from_server_send_to_gui();
+                                        receive_from_server_send_to_gui();
+                                    }
+                                    else {
+                                        temp_process_server_mess.game_started_map_read = false;
+                                        temp_process_server_mess.map_length = 0;
+                                        temp_process_server_mess.map_read_elements = 0;
+                                    }
                             }
                         }
+
                         break;
 
                     case (ServerMessage::Turn):
