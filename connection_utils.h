@@ -818,10 +818,18 @@ private:
             }
         }
         else if (list_type == list_explosions) {
-            
-        }
+            for (const auto & explosion : explosions_temp) {
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(explosion.first);
+                bytes_to_send += single_position_bytes;
 
+                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+                        native_to_big(explosion.second);
+                bytes_to_send += single_position_bytes;
+            }
+        }
     }
+    
     size_t create_udp_message(bool is_Lobby) {
         size_t bytes_to_send = 0;
 
