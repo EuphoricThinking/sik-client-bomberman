@@ -1075,7 +1075,7 @@ public:
         socket_udp_(io),
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false),
-        num_bytes_to_read_server(5), //TODO change
+        num_bytes_to_read_server(1), //TODO change
         player_positions(),
         // send_to_gui_id(0),
         player_name(player_name)//,
