@@ -494,7 +494,7 @@ private:
                 switch (message_type) {
                     case (InputMessage::PlaceBombGUI):
                         validate_data_compare(read_bytes, 1, "Incorrect PlaceBomb gui message\n");
-                        
+
                         data_to_send_server[0] = ClientMessage::PlaceBomb;
                         bytes_to_send++;
 

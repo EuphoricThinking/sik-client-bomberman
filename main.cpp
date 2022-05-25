@@ -136,7 +136,8 @@ void read_command_line_options(string& temp_gui, string& player_name,
 
 void check_if_alphanumeric(const string& to_be_checked, size_t start) {
     for (size_t i = start; i < to_be_checked.length(); i++) {
-        if (!std::isalpha(to_be_checked[i])) {
+//        cout << to_be_checked[i] << endl;
+        if (!std::isdigit(to_be_checked[i])) {
             cerr << "Port number should include only digits\n";
 
             exit(1);
@@ -144,16 +145,18 @@ void check_if_alphanumeric(const string& to_be_checked, size_t start) {
     }
 }
 
-void split_into_host_port(string& host_name, string& host_port, const string& to_be_splitted) {
+void split_into_host_port(const string& to_be_splitted, string& host_name, string& host_port) {
     size_t position_of_last_colon = to_be_splitted.rfind(host_port_delimiter);
     size_t string_length = to_be_splitted.length();
 
     if (position_of_last_colon == std::string::npos || position_of_last_colon == string_length - 1) {
+//        if (position_of_last_colon == std::string::npos) cout << "npos" << endl;
         cerr << "Incorrect format\nExpected: <host_name>:<port>\n";
 
         exit(1);
     }
 
+ //   cout << to_be_splitted.substr(0, position_of_last_colon) << endl;
     check_if_alphanumeric(to_be_splitted, position_of_last_colon + 1);
 
     host_name = to_be_splitted.substr(0, position_of_last_colon);
@@ -177,8 +180,11 @@ int main(int argc, char* argv[]) {
                               argc, argv);
     print_saved_arguments(temp_gui, player_name, port, server_address);
 
+    cout << "beliar" << endl;
     split_into_host_port(temp_gui, host_gui_name, port_gui);
     split_into_host_port(server_address, server_name, port_server);
+    cout << host_gui_name << " " << port_gui << endl;
+    cout << server_name << " " << port_server << endl;
 
     return 0;
 }
