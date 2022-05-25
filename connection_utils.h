@@ -178,6 +178,7 @@ private:
     string server_name;
     //uint8_t send_to_gui_id;
     string player_name;
+    uint8_t message_id;
 
     const int list_blocks = 0;
     const int list_bombs = 1;
@@ -655,14 +656,15 @@ private:
                     boost::bind(&Client_bomberman::read_full_server_name_hello,
                                 this,
                                 boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+                                boost::asio::placeholders::bytes_transferred,
+                                read_length));
         }
     }
 
     void read_full_server_name_hello (const boost::system::error_code& error,
-                                  std::size_t read_bytes) {
+                                  std::size_t read_bytes, size_t name_length) {
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
-            validate_data_compare(read_bytes, num_bytes_to_read_server,
+            validate_data_compare(read_bytes, name_length,
                                   "Error in server name");
 
             server_name = std::string(received_data_server, received_data_server + read_bytes);
@@ -680,11 +682,114 @@ private:
     void read_hello_body_without_string (const boost::system::error_code& error,
                                  std::size_t read_bytes) {
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
-            validate_data_compare(read_bytes, num_bytes_to_read_server,
+            validate_data_compare(read_bytes, hello_body_length_without_string,
                                   "To little data in Hello\n");
+
+            size_t move_further_in_buffer = 0;
+
+            game_status.players_count = received_data_server[0];
+
+            move_further_in_buffer++;
+            game_status.size_x = big_to_native(*(uint16_t*)
+                    (received_data_server + move_further_in_buffer));
+
+            move_further_in_buffer += 2;
+            game_status.size_y = big_to_native(*(uint16_t*)
+                    (received_data_server + move_further_in_buffer));
+
+            move_further_in_buffer += 2;
+            game_status.game_length = big_to_native(*(uint16_t*)
+                    (received_data_server + move_further_in_buffer));
+
+            move_further_in_buffer += 2;
+            game_status.explosion_radius = big_to_native(*(uint16_t*)
+                    (received_data_server + move_further_in_buffer));
+
+            move_further_in_buffer += 2;
+            game_status.bomb_timer = big_to_native(*(uint16_t*)
+                    (received_data_server + move_further_in_buffer));
+
+            process_data_from_server_send_to_gui();
         }
     }
 
+    /*
+     * Accepted player
+     */
+    void read_player_id_and_name_length(const boost::system::error_code& error,
+                                        std::size_t read_bytes, int num_repetitions) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            if (num_repetitions > 0) {
+                validate_data_compare(read_bytes, player_id_name_header_length,
+                                      "Error in reading player id and string name length");
+                player_id_dt player_id = received_data_server[0];
+                size_t string_length_to_read = received_data_server[1];
+
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(received_data_server,
+                                        string_length_to_read + 1),
+                    boost::bind(&Client_bomberman::read_player_name_string_and_address_length,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions, player_id, string_length_to_read));
+            }
+            else {
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
+
+    void read_player_name_string_and_address_length(const boost::system::error_code& error,
+                                        std::size_t read_bytes, int num_repetitions,
+                                        player_id_dt player_id, size_t name_length) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, name_length, "Error player name");
+
+            std::string player_name_temp =
+                    std::string(received_data_server, received_data_server + name_length);
+
+            size_t address_length = received_data_server[name_length];
+
+            boost::asio::async_read(socket_tcp_,
+                boost::asio::buffer(received_data_server,
+                                    address_length),
+                boost::bind(&Client_bomberman::read_player_address_string_add_player,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions, player_id, address_length,
+                            player_name_temp));
+        }
+    }
+
+    void read_player_address_string_add_player(const boost::system::error_code& error,
+                                                    std::size_t read_bytes, int num_repetitions,
+                                                    player_id_dt player_id, size_t address_length,
+                                                    const string& player_name_temp) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, address_length, "Error player address");
+
+            std::string player_address =
+                    std::string(received_data_server, received_data_server + read_bytes);
+
+            players.insert(make_pair(player_id, Player{player_name_temp, player_address}));
+
+            if (--num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(received_data_server,
+                                        player_id_name_header_length),
+                    boost::bind(&Client_bomberman::read_player_id_and_name_length,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions)); // how many times - single player
+            }
+            else {
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
@@ -1193,7 +1298,8 @@ public:
         num_bytes_to_read_server(1), //TODO change
         player_positions(),
         // send_to_gui_id(0),
-        player_name(player_name)//,+
+        player_name(player_name),
+        message_id(def_no_message)//,+
         // blocks(),
         // bombs()
 {
