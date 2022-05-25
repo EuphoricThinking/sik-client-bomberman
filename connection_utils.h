@@ -346,8 +346,8 @@ private:
                             bombs.erase(temp_bomb_id);
 
                             temp_process_server_mess.inner_event_list_length =
-                                    big_to_native(*(map_list_dt *) (received_data_server
-                                                + bomb_id_bytes));
+                                    big_to_native(*(map_list_length_dt *) (received_data_server
+                                                                           + bomb_id_bytes));
 
                             temp_process_server_mess.is_inner_event_header_read = true;
                             num_bytes_to_read_server = player_id_bytes;
@@ -382,7 +382,7 @@ private:
                     else if (!temp_process_server_mess.is_blocks_destroyed_length_read) {
                         // Reading blocks destroyed position length
                         temp_process_server_mess.inner_event_list_length =
-                                big_to_native(*(map_list_dt*) received_data_server);
+                                big_to_native(*(map_list_length_dt*) received_data_server);
                         num_bytes_to_read_server = position_bytes;
                         temp_process_server_mess.is_blocks_destroyed_length_read = true;
 
@@ -663,11 +663,14 @@ private:
 
     void read_full_server_name_hello (const boost::system::error_code& error,
                                   std::size_t read_bytes, size_t name_length) {
-        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+        if (!error || error == boost::asio::error::eof) { //|| read_bytes > 0) {
             validate_data_compare(read_bytes, name_length,
                                   "Error in server name");
 
-            server_name = std::string(received_data_server, received_data_server + read_bytes);
+            if (read_bytes > 0) {
+                server_name = std::string(received_data_server,
+                                          received_data_server + read_bytes);
+            }
 
             boost::asio::async_read(socket_tcp_,
                 boost::asio::buffer(received_data_server,
@@ -681,7 +684,7 @@ private:
 
     void read_hello_body_without_string (const boost::system::error_code& error,
                                  std::size_t read_bytes) {
-        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+        if (!error || error == boost::asio::error::eof) {
             validate_data_compare(read_bytes, hello_body_length_without_string,
                                   "To little data in Hello\n");
 
@@ -746,8 +749,12 @@ private:
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             validate_data_compare(read_bytes, name_length, "Error player name");
 
-            std::string player_name_temp =
-                    std::string(received_data_server, received_data_server + name_length);
+            std::string player_name_temp = "";
+            if (name_length > 0) {
+                player_name_temp =
+                        std::string(received_data_server,
+                                    received_data_server + name_length);
+            }
 
             size_t address_length = received_data_server[name_length];
 
@@ -770,8 +777,13 @@ private:
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             validate_data_compare(read_bytes, address_length, "Error player address");
 
-            std::string player_address =
-                    std::string(received_data_server, received_data_server + read_bytes);
+            std::string player_address = "";
+
+            if (address_length > 0) {
+                player_address =
+                        std::string(received_data_server,
+                                    received_data_server + read_bytes);
+            }
 
             players.insert(make_pair(player_id, Player{player_name_temp, player_address}));
 
@@ -783,11 +795,23 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                num_repetitions)); // how many times - single player
+                                num_repetitions));
             }
             else {
                 process_data_from_server_send_to_gui();
             }
+        }
+    }
+
+    /*
+     *  Game started
+     */
+    void read_player_map_length (const boost::system::error_code& error,
+                                 std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, map_list_length, "GameStarted: incorrect map length");
+
+            size_t map_length = big_to_native(*(map_list_dt))
         }
     }
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
@@ -995,7 +1019,7 @@ private:
 
                             //move_further_in_buffer += 2;
                             temp_process_server_mess.list_length =
-                                    big_to_native(*(map_list_dt *)
+                                    big_to_native(*(map_list_length_dt *)
                                             (received_data_server + turn_bytes)); //move_further_in_buffer));
 
                             temp_process_server_mess.is_turn_header_read = true;
@@ -1027,7 +1051,7 @@ private:
                         // Reading map length
                         if (!temp_process_server_mess.is_game_ended_length_read) {
                             temp_process_server_mess.map_length =
-                                    big_to_native(*(map_list_dt *)
+                                    big_to_native(*(map_list_length_dt *)
                                         received_data_server);
                             temp_process_server_mess.is_game_ended_length_read = true;
                             num_bytes_to_read_server = player_id_score;
