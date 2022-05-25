@@ -827,6 +827,148 @@ private:
     /*
      * Turn
      */
+    void read_turn_and_list_length (const boost::system::error_code& error,
+                                    std::size_t read_bytes) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, turn_header, "Incorrect turn header");
+
+            game_status.turn =
+                    big_to_native(*(uint16_t*) received_data_server);
+
+            map_list_length_dt num_repetitions =
+                    big_to_native(*(map_list_length_dt *)
+                            (received_data_server + turn_bytes));
+
+            if (num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                                        boost::asio::buffer(
+                                                received_data_server,
+                                                message_event_id_bytes),
+                                        boost::bind(
+                                                &Client_bomberman::read_event_id,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred,
+                                                num_repetitions));
+            }
+            else {
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
+
+    /*
+     *  Events
+     */
+    void read_event_id (const boost::system::error_code& error,
+                                    std::size_t read_bytes, map_list_length_dt
+                                    num_repetitions) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            uint8_t event_id = received_data_server[0];
+
+            switch(event_id) {
+                case (Events::BombPlaced):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                bomb_placed_header),
+                        boost::bind(
+                                &Client_bomberman::read_bomb_id_and_position,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+
+                    break;
+
+                case (Events::BombExploded):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                bomb_id_list_length_header),
+                        boost::bind(
+                                &Client_bomberman::read_bomb_id_and_player_id_length,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+
+                    break;
+
+                case (Events::PlayerMoved):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                player_id_pos_header),
+                        boost::bind(
+                                &Client_bomberman::read_player_id_and_position,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+
+                    break;
+
+                case (Events::BlockPlaced):
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                position_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_block_position,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+
+                    break;
+            }
+        }
+    }
+
+    /*
+    * Bomb placed
+    */
+    void read_bomb_id_and_position (const boost::system::error_code& error,
+                        std::size_t read_bytes, map_list_length_dt
+                        num_repetitions) {
+        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+            validate_data_compare(read_bytes, bomb_placed_header,
+                                  "Error in reading bomb position");
+
+            bomb_id_dt temp_bomb_id = big_to_native(*(bomb_id_dt*)
+                    received_data_server);
+
+            position_dt  x = big_to_native(*(position_dt*)
+                    (received_data_server + bomb_id_bytes));
+            position_dt y = big_to_native(*(position_dt*)
+                    (received_data_server + bomb_id_bytes + single_position_bytes));
+
+            bombs.insert(make_pair(temp_bomb_id,
+                                   Bomb{Position{x, y}, game_status.bomb_timer}));
+
+            if (--num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(
+                            received_data_server,
+                            bomb_placed_header),
+                    boost::bind(
+                            &Client_bomberman::read_bomb_id_and_position,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
+            }
+            else {
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
+
+    /*
+     *  Bomb exploded
+     */
+
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
