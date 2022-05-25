@@ -609,7 +609,31 @@ private:
 
                     case (ServerMessage::GameEnded):
                         if (!temp_process_server_mess.game_ended_length_not_read) {
-                            
+                            //TODO
+                            temp_process_server_mess.map_length =
+                                    big_to_native(*(map_list_dt *)
+                                        received_data_server);
+                            temp_process_server_mess.game_ended_length_not_read = true;
+                            num_bytes_to_read_server = player_id_score;
+                        }
+
+                        if (temp_process_server_mess.map_read_elements <
+                                temp_process_server_mess.map_length) {
+                            player_id_dt player_id = received_data_server[0];
+
+                            score_dt score = big_to_native(*(score_dt *)
+                                    (received_data_server + 1));
+
+                            auto iter = scores.find(player_id);
+                            if (iter != scores.end()) {
+                                iter->second = score;
+                            }
+
+                            if (++temp_process_server_mess.map_read_elements <
+                                    temp_process_server_mess.map_length) {
+                                receive_from_server_send_to_gui();
+                            }
+
                         }
 
                         break;
