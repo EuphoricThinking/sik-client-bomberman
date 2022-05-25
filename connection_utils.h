@@ -811,9 +811,22 @@ private:
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             validate_data_compare(read_bytes, map_list_length, "GameStarted: incorrect map length");
 
-            size_t map_length = big_to_native(*(map_list_dt))
+            size_t map_length = big_to_native(*(map_list_length_dt *) received_data_server);
+
+            boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(received_data_server,
+                                        player_id_name_header_length),
+                    boost::bind(&Client_bomberman::read_player_id_and_name_length,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                map_length));
         }
     }
+
+    /*
+     * Turn
+     */
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
