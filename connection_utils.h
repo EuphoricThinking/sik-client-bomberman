@@ -906,6 +906,25 @@ private:
     void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
                            std::size_t) {
         // Repeat the cycle
+        num_bytes_to_read_server = 1;
+        uint8_t message_type = temp_process_server_mess.server_current_message_id;
+
+        if (message_type == ServerMessage::Turn) {
+            death_per_turn_temp.clear();
+            explosions_temp.clear();
+        }
+        else if (message_type == ServerMessage::GameEnded) {
+            scores.clear();
+            bombs.clear();
+            blocks.clear();
+            player_positions.clear();
+            players.clear();
+
+            gameStarted = false;
+        }
+
+        temp_process_server_mess.server_current_message_id = def_no_message;
+
         receive_from_server_send_to_gui();
     }
 
