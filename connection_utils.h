@@ -719,13 +719,16 @@ private:
         data_to_send_gui[0] = (char)server_name.length();
         bytes_to_send++;
 
-        strcpy(data_to_send_gui + 1, server_name.c_str());
+        strcpy(data_to_send_gui + bytes_to_send, server_name.c_str());
         bytes_to_send += server_name.length();
 
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
             bytes_to_send++;
         }
+
+        *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_x));
+
 
 
         return bytes_to_send;
