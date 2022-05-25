@@ -123,6 +123,7 @@ typedef struct ServerMessageData {
     uint8_t event_id = def_no_message;
     bool is_inner_event_header_read = false; // BombId, List PlayerId length
     bool are_robots_destroyed_read = false;
+//    bool is_blocks_destroyed_header_read = false;
     bool is_blocks_destroyed_length_read = false;
 
 //    bool is_bomb_placed_read = false;
@@ -225,6 +226,7 @@ private:
         if (temp_process_server_mess.event_id == def_no_message) {
             temp_process_server_mess.event_id = received_data_server[0];
 
+            // Determine event id
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
                     num_bytes_to_read_server = bomb_placed_header;
@@ -274,15 +276,18 @@ private:
                     bombs.insert(make_pair(temp_bomb_id,
                                            Bomb{Position{x, y}, game_status.bomb_timer}));
 
-                    temp_process_server_mess.list_read_elements++;
-                    temp_process_server_mess.event_id = def_no_message;
-                    num_bytes_to_read_server = 1; // event id
+                    if (++temp_process_server_mess.list_read_elements <
+                            temp_process_server_mess.list_length) {
+                        temp_process_server_mess.event_id = def_no_message;
+                        num_bytes_to_read_server = 1; // event id
 
-                    receive_from_server_send_to_gui();
+                        receive_from_server_send_to_gui();
+                    }
 
                     break;
 
                 case (Events::BombExploded):
+                    // Determine BombId, get length of the robots destroyed list
                     if (!temp_process_server_mess.is_inner_event_header_read) {
                         temp_bomb_id = big_to_native(*(bomb_id_dt*)
                                 received_data_server);
@@ -309,6 +314,8 @@ private:
                         }
                     }
                     else if (!temp_process_server_mess.are_robots_destroyed_read) {
+                        // Probably this if is possible to delete?
+                        // Reading dead players
                         if (temp_process_server_mess.inner_event_list_read_elements <
                             temp_process_server_mess.inner_event_list_length) {
                                 death_per_turn_temp.insert(received_data_server[0]);
@@ -323,8 +330,39 @@ private:
                                 }
                                 receive_from_server_send_to_gui();
                         }
-                        else {
-                            temp_process_server_mess.
+                    }
+                    else if (!temp_process_server_mess.is_blocks_destroyed_length_read) {
+                        // Reading blocks destroyed position length
+                        temp_process_server_mess.inner_event_list_length =
+                                big_to_native(*(map_list_dt*) received_data_server);
+                        num_bytes_to_read_server = position_bytes;
+                        temp_process_server_mess.is_blocks_destroyed_length_read = true;
+
+                        receive_from_server_send_to_gui();
+                    }
+                    else {
+                        // Reading destoryed blocks positions
+                        if (temp_process_server_mess.inner_event_list_read_elements <
+                            temp_process_server_mess.inner_event_list_length) {
+                            x = big_to_native(*(position_dt*)
+                                    (received_data_server + bomb_id_bytes));
+                            y = big_to_native(*(position_dt*)
+                                    (received_data_server + 2*bomb_id_bytes));
+
+                            blocks.erase(make_pair(x, y));
+                            explosions_temp.insert(make_pair(x, y));
+
+                            if (++temp_process_server_mess.inner_event_list_read_elements
+                                == temp_process_server_mess.inner_event_list_length) {
+                                // Finished full event
+                                if (++temp_process_server_mess.list_read_elements
+                                    != temp_process_server_mess.list_length) {
+                                    // Isn't the last element
+                                    temp_process_server_mess.inner_event_list_read_elements = 0;
+
+                                    receive_from_server_send_to_gui();
+                                }
+                            }
                         }
                     }
 
