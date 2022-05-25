@@ -253,7 +253,10 @@ private:
     }
 
     void update_bomb_timers() {
-
+        for (auto iter = bombs.begin(); iter != bombs.end(); iter++) {
+            Bomb& bomb_data = iter->second;
+            bomb_data.timer--;
+        }
     }
     void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
@@ -926,6 +929,11 @@ private:
         }
     }
 
+    void update_after_turn() {
+        update_bomb_timers();
+        update_player_scores();
+    }
+
     /*
     * Bomb placed
     */
@@ -951,15 +959,17 @@ private:
                 boost::asio::async_read(socket_tcp_,
                     boost::asio::buffer(
                             received_data_server,
-                            bomb_placed_header),
+                            message_event_id_bytes),
                     boost::bind(
-                            &Client_bomberman::read_bomb_id_and_position,
+                            &Client_bomberman::read_event_id,
                             this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
                             num_repetitions));
             }
             else {
+                update_after_turn();
+
                 process_data_from_server_send_to_gui();
             }
         }
@@ -968,7 +978,95 @@ private:
     /*
      *  Bomb exploded
      */
+    void read_bomb_id_and_player_id_length (const boost::system::error_code& error,
+                                            std::size_t read_bytes, map_list_length_dt
+                                            num_repetitions) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, bomb_id_list_length_header,
+                                  "Bomb exploded: incorrect length of bomb id"
+                                  "or player id list length");
 
+            bomb_id_dt temp_bomb_id = big_to_native(*(bomb_id_dt*)
+                    received_data_server);
+
+            auto iterBomb = bombs.find(temp_bomb_id);
+            if (iterBomb != bombs.end()) {
+                position_dt x = iterBomb->second.coordinates.x;
+                position_dt y = iterBomb->second.coordinates.y;
+                explosions_temp.insert(make_pair(x, y));
+                bombs.erase(temp_bomb_id);
+
+                map_list_length_dt player_id_list_length =
+                        big_to_native(*(map_list_length_dt *) (received_data_server
+                                                               + bomb_id_bytes));
+
+                if (player_id_list_length > 0) {
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                player_id_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_player_id,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions, player_id_list_length));
+                }
+                else {
+                    boost::asio::buffer(
+                            received_data_server,
+                            map_list_length),
+                            boost::bind(
+                                    &Client_bomberman::read_blocks_destroyed_length,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred,
+                                    num_repetitions));
+                }
+            }
+            else {
+                cerr << "Bomb not found\n";
+                exit(1);
+            }
+        }
+    }
+
+    /*
+     *  Bomb exploded - player id list
+     */
+    void read_player_id (const boost::system::error_code& error,
+                         std::size_t read_bytes, map_list_length_dt
+                         num_repetitions, map_list_length_dt player_id_left_elements) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, player_id_bytes, "Error in player id");
+
+            death_per_turn_temp.insert(received_data_server[0]);
+
+            if (--player_id_left_elements > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(
+                            received_data_server,
+                            player_id_bytes),
+                    boost::bind(
+                            &Client_bomberman::read_player_id,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions, player_id_left_elements));
+            }
+            else {
+                boost::asio::buffer(
+                    received_data_server,
+                    map_list_length),
+                    boost::bind(
+                            &Client_bomberman::read_blocks_destroyed_length,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
+            }
+        }
+    }
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
