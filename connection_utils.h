@@ -1128,7 +1128,7 @@ private:
             position_dt x = big_to_native(*(position_dt*)
                     (received_data_server));
             position_dt y = big_to_native(*(position_dt*)
-                    (received_data_server + position_bytes));
+                    (received_data_server + single_position_bytes));
 
             blocks.erase(make_pair(x, y));
             explosions_temp.insert(make_pair(x, y));
@@ -1181,7 +1181,7 @@ private:
             position_dt x = big_to_native(*(position_dt*)
                     (received_data_server + player_id_bytes));
             position_dt y = big_to_native(*(position_dt*)
-                    (received_data_server + player_id_bytes + position_bytes));
+                    (received_data_server + player_id_bytes + single_position_bytes));
 
             auto iterPlayer = player_positions.find(player_id);
             if (iterPlayer != player_positions.end()) {
@@ -1211,6 +1211,42 @@ private:
                 cerr << "Turn - Player Moved: player not found\n";
 
                 exit(1);
+            }
+        }
+    }
+
+    /*
+     *  Block placed
+     */
+    void read_block_position (const boost::system::error_code& error,
+                              std::size_t read_bytes, map_list_length_dt
+                              num_repetitions) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, position_bytes,
+                                  "Turn - Block Placed: incorrect message length");
+
+            position_dt x = big_to_native(*(position_dt*)
+                    (received_data_server));
+            position_dt y = big_to_native(*(position_dt*)
+                    (received_data_server + single_position_bytes));
+            blocks.insert(make_pair(x, y));
+
+            if (--num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                                        boost::asio::buffer(
+                                                received_data_server,
+                                                message_event_id_bytes),
+                                        boost::bind(
+                                                &Client_bomberman::read_event_id,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred,
+                                                num_repetitions));
+            }
+            else {
+                update_after_turn();
+
+                process_data_from_server_send_to_gui();
             }
         }
     }
