@@ -122,7 +122,7 @@ typedef struct ServerMessageData {
     // Events
     uint8_t event_id = def_no_message;
     bool is_inner_event_header_read = false; // BombId, List PlayerId length
-    bool is_robots_destroyed_read = false;
+    bool are_robots_destroyed_read = false;
     bool is_blocks_destroyed_length_read = false;
 
 //    bool is_bomb_placed_read = false;
@@ -259,7 +259,8 @@ private:
             bomb_id_dt temp_bomb_id;
             position_dt x;
             position_dt y;
-            
+            std::map<bomb_id_dt, Bomb>::iterator iterBomb;
+
             switch(received_data_server[0]) {
                 case (Events::BombPlaced):
                     temp_bomb_id = big_to_native(*(bomb_id_dt*)
@@ -282,7 +283,50 @@ private:
                     break;
 
                 case (Events::BombExploded):
-                    num_bytes_to_read_server = bomb_id_list_length_header;
+                    if (!temp_process_server_mess.is_inner_event_header_read) {
+                        temp_bomb_id = big_to_native(*(bomb_id_dt*)
+                                received_data_server);
+
+                        iterBomb = bombs.find(temp_bomb_id);
+                        if (iterBomb != bombs.end()) {
+                            x = iterBomb->second.coordinates.x;
+                            y = iterBomb->second.coordinates.y;
+                            explosions_temp.insert(make_pair(x, y));
+                            bombs.erase(temp_bomb_id);
+
+                            temp_process_server_mess.inner_event_list_length =
+                                    big_to_native(*(bomb_id_dt*) (received_data_server
+                                                + bomb_id_bytes));
+
+                            temp_process_server_mess.is_inner_event_header_read = true;
+                            num_bytes_to_read_server = player_id_bytes;
+
+                            receive_from_server_send_to_gui();
+                        }
+                        else {
+                            cerr << "Bomb not found\n";
+                            exit(1);
+                        }
+                    }
+                    else if (!temp_process_server_mess.are_robots_destroyed_read) {
+                        if (temp_process_server_mess.inner_event_list_read_elements <
+                            temp_process_server_mess.inner_event_list_length) {
+                                death_per_turn_temp.insert(received_data_server[0]);
+
+
+                                if (++temp_process_server_mess.inner_event_list_read_elements
+                                    == temp_process_server_mess.inner_event_list_length) {
+                                        num_bytes_to_read_server = map_list_length;
+                                        temp_process_server_mess.are_robots_destroyed_read = true;
+
+                                        temp_process_server_mess.inner_event_list_read_elements = 0;
+                                }
+                                receive_from_server_send_to_gui();
+                        }
+                        else {
+                            temp_process_server_mess.
+                        }
+                    }
 
                     receive_from_server_send_to_gui();
 
