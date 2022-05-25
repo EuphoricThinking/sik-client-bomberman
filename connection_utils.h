@@ -1272,6 +1272,47 @@ private:
                             received_data_server,
                             player_id_score_bytes),
                     boost::bind(
+                            &Client_bomberman::read_player_id_score,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
+            }
+            else {
+                process_data_from_server_send_to_gui();
+            }
+        }
+    }
+
+    void read_player_id_score (const boost::system::error_code& error,
+                              std::size_t read_bytes, map_list_length_dt
+                              num_repetitions) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, player_id_score_bytes,
+                                  "Game ended: incorrect player id and score"
+                                  "message length");
+
+            player_id_dt player_id = received_data_server[0];
+
+            score_dt score = big_to_native(*(score_dt *)
+                    (received_data_server + 1));
+
+            auto iter = scores.find(player_id);
+            if (iter != scores.end()) {
+                iter->second = score;
+            }
+            else {
+                cerr << "Game ended: player not found\n";
+
+                exit(1);
+            }
+
+            if (--num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(
+                            received_data_server,
+                            player_id_score_bytes),
+                    boost::bind(
                             &Client_bomberman::read_event_id,
                             this,
                             boost::asio::placeholders::error,
@@ -1283,6 +1324,9 @@ private:
             }
         }
     }
+
+    /******* End of reading server messages ******/
+    
     void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
