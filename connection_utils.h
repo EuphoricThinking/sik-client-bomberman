@@ -36,7 +36,7 @@ using std::make_pair;
 using udp_buff_send = char[max_udp_roundup];//boost::array<uint8_t, max_udp_roundup>;
 using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
 using tcp_buff_rec = uint8_t[tcp_buff_default]; //boost::array<uint8_t, tcp_buff_default>;
-using tcp_buff_send = std::vector<uint8_t>;
+using tcp_buff_send = char[tcp_buff_default]; //std::vector<uint8_t>;
 
 void validate_server_mess_id(uint8_t mess) {
     // negative values are cast to big positive values
@@ -161,6 +161,7 @@ private:
 
     size_t num_bytes_to_read_server;
 
+
     ServerMessageData temp_process_server_mess;
     GameData game_status;
 
@@ -176,6 +177,7 @@ private:
 
     string server_name;
     uint8_t send_to_gui_id;
+    string player_name;
 
     const int list_blocks = 0;
     const int list_bombs = 1;
@@ -465,14 +467,54 @@ private:
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t read_bytes) {
         if (!error || error == boost::asio::error::eof) {
+            size_t bytes_to_send = 0;
 
-        }
+            if (!gameStarted) {
+                data_to_send_server[0] = ClientMessage::Join;
+                bytes_to_send++;
 
-        // Send to server
-        boost::asio::async_write(socket_tcp_, boost::asio::buffer(data_to_send_server),
-                                 boost::bind(&Client_bomberman::after_sent_data_to_server, this,
+                strcpy(data_to_send_server + bytes_to_send, player_name.c_str());
+                bytes_to_send += player_name.length();
+            }
+            else {
+                uint8_t message_type = received_data_gui[0];
+
+                switch (message_type) {
+                    case (InputMessage::PlaceBombGUI):
+                        //    dat
+                        data_to_send_server[0] = ClientMessage::PlaceBomb;
+                        bytes_to_send++;
+
+                        break;
+
+                    case (InputMessage::PlaceBlockGUI):
+                        data_to_send_server[0] = ClientMessage::PlaceBlock;
+                        bytes_to_send++;
+
+                        break;
+
+                    case (InputMessage::MoveGUI):
+                        data_to_send_server[0] = ClientMessage::Move;
+                        bytes_to_send++;
+
+                        data_to_send_server[bytes_to_send] = (char)received_data_gui[bytes_to_send];
+                        bytes_to_send++;
+
+                        break;
+
+                }
+            }
+
+
+            // Send to server
+            boost::asio::async_write(socket_tcp_,
+                                     boost::asio::buffer(data_to_send_server, bytes_to_send),
+                                     boost::bind(
+                                             &Client_bomberman::after_sent_data_to_server,
+                                             this,
                                              boost::asio::placeholders::error,
                                              boost::asio::placeholders::bytes_transferred));
+        }
     }
 
     void after_sent_data_to_server([[maybe_unused]] const boost::system::error_code& error,
@@ -932,7 +974,7 @@ private:
 
 public:
     Client_bomberman(io_context& io, const string& server_name, const string& server_port, const string& gui_name,
-                     const string& gui_port, uint16_t client_port)
+                     const string& gui_port, uint16_t client_port, string player_name)
     :   //io_(io),
         socket_tcp_(io),
         // acceptor_(io),
@@ -944,7 +986,8 @@ public:
         gameStarted(false),
         num_bytes_to_read_server(1),
         player_positions(),
-        send_to_gui_id(0)//,
+        send_to_gui_id(0),
+        player_name(player_name)//,
         // blocks(),
         // bombs()
 {
