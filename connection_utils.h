@@ -126,6 +126,8 @@ typedef struct ServerMessageData {
 //    bool is_blocks_destroyed_header_read = false;
     bool is_blocks_destroyed_length_read = false;
 
+    bool game_ended_length_not_read = false;
+
 //    bool is_player_moved_not_read = false;
 
 //    bool is_bomb_placed_read = false;
@@ -580,11 +582,6 @@ private:
                         break;
 
                     case (ServerMessage::Turn):
-                        num_bytes_to_read_server = turn_header;
-
-                        break;
-
-                    case (ServerMessage::GameEnded):
                         if (!temp_process_server_mess.is_turn_header_read) {
                             game_status.turn =
                                     big_to_native(*(uint16_t*) received_data_server);
@@ -604,14 +601,19 @@ private:
                         else {
                             if (temp_process_server_mess.list_read_elements <
                                     temp_process_server_mess.list_length) {
-                                if (temp_process_server_mess.inner_event_list_read_elements <
-                                        temp_process_server_mess.inner_event_list_length) {
-                                    // Collecting explosions has started
-                                }
+
                             }
                         }
 
                         break;
+
+                    case (ServerMessage::GameEnded):
+                        if (!temp_process_server_mess.game_ended_length_not_read) {
+                            
+                        }
+
+                        break;
+
                 }
             }
 //            if (false) { // If all the message bytes haven't been read; reading has to be continued
