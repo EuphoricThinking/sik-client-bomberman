@@ -33,7 +33,7 @@ using std::endl;
 using std::cout;
 using std::make_pair;
 
-using udp_buff_send = boost::array<uint8_t, max_udp_roundup>;
+using udp_buff_send = char[max_udp_roundup];//boost::array<uint8_t, max_udp_roundup>;
 using input_mess = boost::array<uint8_t, max_input_mess_roundup>;
 using tcp_buff_rec = uint8_t[tcp_buff_default]; //boost::array<uint8_t, tcp_buff_default>;
 using tcp_buff_send = std::vector<uint8_t>;
@@ -716,8 +716,11 @@ private:
     void process_data_from_server_send_to_gui() {
         uint8_t message_type = temp_process_server_mess.server_current_message_id;
 
+        size_t bytes_to_send = 0;
+
         if (message_type == ServerMessage::Hello || message_type == ServerMessage::GameEnded
             || message_type == ServerMessage::AcceptedPlayer) {
+                strcpy(data_to_send_gui, server_name.c_str());
 
         }
 
