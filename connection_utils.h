@@ -557,6 +557,8 @@ private:
      *  Server -> client -> GUI
      */
     void receive_from_server_send_to_gui() {
+        cout << "RECEIVE FROM SERVER" << endl;
+        cout << "I'm here, bytes to read are: " << num_bytes_to_read_server << endl;
         boost::asio::async_read(socket_tcp_,
                                 boost::asio::buffer(received_data_server,
                                                     num_bytes_to_read_server),
@@ -566,7 +568,43 @@ private:
                                                 boost::asio::placeholders::bytes_transferred));
     }
 
-    void after_receive_from_server(const boost::system::error_code& error,
+    void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
+                                   [[maybe_unused]] std::size_t read_bytes) {
+        if (received_data_server[0] == ServerMessage::Hello) {
+            cout << "HELLLLLO\n"; // id raead
+            size_t strlength = string_length_info;
+            boost::asio::async_read(socket_tcp_,
+                                    boost::asio::buffer(received_data_server,
+                                                        strlength),
+                                    boost::bind(&Client_bomberman::after_receive_from_server_hel,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
+        }
+    }
+
+    void after_receive_from_server_hel([[maybe_unused]] const boost::system::error_code& error,
+                                       [[maybe_unused]] std::size_t read_bytes) {
+        size_t strlength = received_data_server[0];
+        cout << "num bytes to read " << strlength << endl;
+
+        boost::asio::async_read(socket_tcp_,
+                                boost::asio::buffer(received_data_server,
+                                                    strlength),
+                                boost::bind(&Client_bomberman::after_receive_from_server_hel2,
+                                            this,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    }
+
+    void after_receive_from_server_hel2([[maybe_unused]] const boost::system::error_code& error,
+                                       std::size_t read_bytes) {
+        cout << "i have read for a string: " << read_bytes << endl;
+        server_name = std::string(received_data_server, received_data_server + read_bytes);
+        cout << server_name << endl;
+    }
+
+    void after_receive_from_server2(const boost::system::error_code& error,
                                    std::size_t read_bytes) {
 
         if (!error || error == boost::asio::error::eof || read_bytes > 0) { //read_bytes
@@ -581,14 +619,14 @@ private:
                 cout << "read num " << temp_process_server_mess.server_current_message_id << "read bytes " << read_bytes << endl;
 
                 switch (temp_process_server_mess.server_current_message_id) {
-                    case (ServerMessage::Hello):
-                        cout << "HELLO \n";
-                        num_bytes_to_read_server = string_length_info;
+                    case (ServerMessage::AcceptedPlayer):
+                        num_bytes_to_read_server = player_id_name_header_length;
 
                         break;
 
-                    case (ServerMessage::AcceptedPlayer):
-                        num_bytes_to_read_server = player_id_name_header_length;
+                    case (ServerMessage::Hello):
+                        cout << "HELLO \n";
+                        num_bytes_to_read_server = string_length_info;
 
                         break;
 
@@ -620,6 +658,17 @@ private:
                             cout << "FIRST Save string hello length: " << (int)received_data_server[0] << endl;
                             num_bytes_to_read_server = received_data_server[0]; // String to read
                             temp_process_server_mess.is_hello_string_length_read = true;
+                             size_t kurwaaaa = num_bytes_to_read_server;
+
+                            boost::asio::async_read(socket_tcp_,
+                                                    boost::asio::buffer(received_data_server,
+                                                                        kurwaaaa),
+                                                    boost::bind(&Client_bomberman::after_receive_from_server,
+                                                                this,
+                                                                boost::asio::placeholders::error,
+                                                                boost::asio::placeholders::bytes_transferred));
+                            return;
+
 
                             receive_from_server_send_to_gui();
                         } // else removed?
