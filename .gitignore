@@ -7,3 +7,4 @@ cmake_install.cmake
 Makefile
 libconnection_utils.a
 testy-zad2/
+robots-client

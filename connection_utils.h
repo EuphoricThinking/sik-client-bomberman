@@ -617,19 +617,23 @@ private:
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
                         if (!temp_process_server_mess.is_hello_string_length_read) {
-                            cout << "Save string hello length: " << received_data_server[0];
+                            cout << "FIRST Save string hello length: " << (int)received_data_server[0] << endl;
                             num_bytes_to_read_server = received_data_server[0]; // String to read
                             temp_process_server_mess.is_hello_string_length_read = true;
 
                             receive_from_server_send_to_gui();
-                        }
-                        else if (!temp_process_server_mess.is_hello_string_read) {
+                        } // else removed?
+                        if (!temp_process_server_mess.is_hello_string_read) {
+                            cout << "SECOND Enter here" << endl;
+                            cout << "SECOND Save string hello; saved: " << read_bytes << " intended: " << num_bytes_to_read_server << endl;
                             validate_data_compare(read_bytes, num_bytes_to_read_server,
                                             "Error in server name");
 
+                            cout << "Save string hello; saved: " << read_bytes << " intended: " << num_bytes_to_read_server << endl;
                             server_name = std::string(received_data_server, received_data_server + read_bytes);
                             temp_process_server_mess.is_hello_string_read = true;
                             num_bytes_to_read_server = hello_body_length_without_string;
+                            cout << "server name READ: " << server_name << endl;
 
                             receive_from_server_send_to_gui();
                         }
