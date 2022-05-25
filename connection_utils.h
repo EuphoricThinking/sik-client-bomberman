@@ -713,6 +713,23 @@ private:
         }
     }
 
+    size_t create_udp_message(bool is_Lobby) {
+        size_t bytes_to_send = 0;
+
+        data_to_send_gui[0] = (char)server_name.length();
+        bytes_to_send++;
+
+        strcpy(data_to_send_gui + 1, server_name.c_str());
+        bytes_to_send += server_name.length();
+
+        if (is_Lobby) {
+            data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
+            bytes_to_send++;
+        }
+
+
+        return bytes_to_send;
+    }
     void process_data_from_server_send_to_gui() {
         uint8_t message_type = temp_process_server_mess.server_current_message_id;
 
@@ -720,7 +737,7 @@ private:
 
         if (message_type == ServerMessage::Hello || message_type == ServerMessage::GameEnded
             || message_type == ServerMessage::AcceptedPlayer) {
-                strcpy(data_to_send_gui, server_name.c_str());
+
 
         }
 
