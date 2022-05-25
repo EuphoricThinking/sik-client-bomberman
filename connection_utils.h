@@ -473,7 +473,9 @@ private:
      */
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t read_bytes) {
+        cout << "I have received" << endl;
         if (!error || error == boost::asio::error::eof) {
+            cout << received_data_gui[0] << endl;
             size_t bytes_to_send = 0;
 
             if (read_bytes > max_input_message_bytes || read_bytes == 0) {
@@ -540,6 +542,7 @@ private:
 
     void receive_from_gui_send_to_server() {
         // Receive from GUI
+        cout << "I should receive\n";
         gui_socket_to_receive_.async_receive(
                 boost::asio::buffer(received_data_gui),
                 boost::bind(&Client_bomberman::process_data_from_gui, this,
@@ -570,12 +573,16 @@ private:
             if (temp_process_server_mess.server_current_message_id == def_no_message) {
                 // Check read one byte
                 validate_server_mess_id(received_data_server[0]);
+                cout << "read num " << received_data_server[0] << "read bytes " << read_bytes << endl;
 
                 temp_process_server_mess.server_current_message_id =
                         received_data_server[0];
 
+                cout << "read num " << temp_process_server_mess.server_current_message_id << "read bytes " << read_bytes << endl;
+
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
+                        cout << "HELLO \n";
                         num_bytes_to_read_server = string_length_info;
 
                         break;
@@ -610,6 +617,7 @@ private:
                 switch (temp_process_server_mess.server_current_message_id) {
                     case (ServerMessage::Hello):
                         if (!temp_process_server_mess.is_hello_string_length_read) {
+                            cout << "Save string hello length: " << received_data_server[0];
                             num_bytes_to_read_server = received_data_server[0]; // String to read
                             temp_process_server_mess.is_hello_string_length_read = true;
 
@@ -626,6 +634,7 @@ private:
                             receive_from_server_send_to_gui();
                         }
                         // Full body is read
+                        cout << "Received from server: " << read_bytes << " to be read " << num_bytes_to_read_server << endl;
                         validate_data_compare(read_bytes, num_bytes_to_read_server,
                                               "To little data in Hello\n");
                         // game_status.players_count = (*(uint8_t*) received_data_server);
@@ -999,7 +1008,7 @@ public:
         socket_udp_(io),
         gui_socket_to_receive_(io, udp::endpoint(udp::v6(), client_port)),
         gameStarted(false),
-        num_bytes_to_read_server(1),
+        num_bytes_to_read_server(1), //TODO change
         player_positions(),
         // send_to_gui_id(0),
         player_name(player_name)//,
@@ -1007,12 +1016,14 @@ public:
         // bombs()
 {
         try {
+            cout << "buffer size: " << sizeof(received_data_server) << endl;
+            memset(received_data_server, 0, tcp_buff_default);
             //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
             cout << "entered client" << endl;
             boost::asio::ip::tcp::no_delay option(true);
             cout << "Found option" << endl;
             //socket_tcp_.set_option(option);
-            cout << "Set option" << endl;
+            cout << "Set option " << server_name << " " << server_port << endl;
 
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(tcp::v6(), server_name, server_port);
@@ -1020,6 +1031,10 @@ public:
             boost::asio::connect(socket_tcp_, server_endpoints_);
             socket_tcp_.set_option(option);
             cout << "tcp connected" << endl;
+/*            auto endpoints = tcp_resolver_.resolve(server_name, server_port);
+            socket_tcp_.open(tcp::v6());
+            socket_tcp_.connect(endpoints->endpoint());
+            socket_tcp_.set_option(option); */
 
             udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
