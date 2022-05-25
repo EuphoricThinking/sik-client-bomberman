@@ -1013,6 +1013,7 @@ private:
                                 num_repetitions, player_id_list_length));
                 }
                 else {
+                    boost::asio::async_read(socket_tcp_,
                     boost::asio::buffer(
                             received_data_server,
                             map_list_length),
@@ -1055,6 +1056,7 @@ private:
                             num_repetitions, player_id_left_elements));
             }
             else {
+                boost::asio::async_read(socket_tcp_,
                 boost::asio::buffer(
                     received_data_server,
                     map_list_length),
@@ -1064,6 +1066,100 @@ private:
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
                             num_repetitions));
+            }
+        }
+    }
+
+    void read_blocks_destroyed_length (const boost::system::error_code& error,
+                                       std::size_t read_bytes, map_list_length_dt
+                                       num_repetitions) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, map_list_length,
+                                  "Bomb exploded: Incorrect blocks destroyed length");
+
+            map_list_length_dt blocks_destroyed_length =
+                    big_to_native(*(map_list_length_dt*) received_data_server);
+
+            if (blocks_destroyed_length > 0) {
+                boost::asio::async_read(socket_tcp_,
+                    boost::asio::buffer(
+                            received_data_server,
+                            position_bytes),
+                    boost::bind(
+                            &Client_bomberman::read_blocks_destroyed_positions,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions, blocks_destroyed_length));
+            }
+            else {
+                if (--num_repetitions > 0) {
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                message_event_id_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_event_id,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+                }
+                else {
+                    update_after_turn();
+
+                    process_data_from_server_send_to_gui();
+                }
+            }
+        }
+    }
+
+    void read_blocks_destroyed_positions (const boost::system::error_code& error,
+                                          std::size_t read_bytes, map_list_length_dt
+                                          num_repetitions,
+                                          map_list_length_dt blocks_position_left_elements) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, position_bytes,
+                                  "Bomb exploded: incorrect position read");
+
+            position_dt x = big_to_native(*(position_dt*)
+                    (received_data_server));
+            position_dt y = big_to_native(*(position_dt*)
+                    (received_data_server + position_bytes));
+
+            blocks.erase(make_pair(x, y));
+            explosions_temp.insert(make_pair(x, y));
+
+            if (--blocks_position_left_elements > 0) {
+                boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                position_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_blocks_destroyed_positions,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions, blocks_position_left_elements));
+            }
+            else {
+                if (--num_repetitions > 0) {
+                    boost::asio::async_read(socket_tcp_,
+                        boost::asio::buffer(
+                                received_data_server,
+                                message_event_id_bytes),
+                        boost::bind(
+                                &Client_bomberman::read_event_id,
+                                this,
+                                boost::asio::placeholders::error,
+                                boost::asio::placeholders::bytes_transferred,
+                                num_repetitions));
+                }
+                else {
+                    update_after_turn();
+
+                    process_data_from_server_send_to_gui();
+                }
             }
         }
     }
