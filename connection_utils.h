@@ -1070,6 +1070,9 @@ private:
         }
     }
 
+    /*
+     *  Bomb exploded - blocks destroyed
+     */
     void read_blocks_destroyed_length (const boost::system::error_code& error,
                                        std::size_t read_bytes, map_list_length_dt
                                        num_repetitions) {
@@ -1160,6 +1163,45 @@ private:
 
                     process_data_from_server_send_to_gui();
                 }
+            }
+        }
+    }
+
+    /*
+     *  Player moved
+     */
+    void read_player_id_and_position (const boost::system::error_code& error,
+                                      std::size_t read_bytes, map_list_length_dt
+                                      num_repetitions) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, player_id_pos_header,
+                                  "Turn: incorrect player position");
+
+            player_id_dt player_id = big_to_native(*(player_id_dt *) received_data_server);
+            position_dt x = big_to_native(*(position_dt*)
+                    (received_data_server + player_id_bytes));
+            position_dt y = big_to_native(*(position_dt*)
+                    (received_data_server + player_id_bytes + position_bytes));
+
+            auto iterPlayer = player_positions.find(player_id);
+            if (iterPlayer != player_positions.end()) {
+                Position & temp_pos = iterPlayer->second;
+                temp_pos.x = x;
+                temp_pos.y = y;
+
+                temp_process_server_mess.event_id = def_no_message;
+                num_bytes_to_read_server = 1; // Next message or event id
+                if (++temp_process_server_mess.list_read_elements
+                    != temp_process_server_mess.list_length) {
+                    // Isn't the last element
+
+                    receive_from_server_send_to_gui();
+                }
+            }
+            else {
+                cerr << "Turn - Player Moved: player not found\n";
+
+                exit(1);
             }
         }
     }
