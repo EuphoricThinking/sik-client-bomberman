@@ -523,9 +523,11 @@ private:
 
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t read_bytes) {
-        cout << "\t" << "I have received" << endl;
-        if (!error || error == boost::asio::error::eof || is_valid_gui_message(read_bytes)) {
-            cout << "\t" << "GUI received " << received_data_gui[0] << endl;
+        cout << "\t" << "I have received GUI" << endl;
+        cout << InputMessage::PlaceBombGUI << " " << InputMessage::PlaceBlockGUI << " " << InputMessage::MoveGUI << endl;
+        if ((!error || error == boost::asio::error::eof) && is_valid_gui_message(read_bytes)) {
+            cout << "\t" << "GUI received " << (int)received_data_gui[0] <<
+                "bytes: " << read_bytes << endl;
             size_t bytes_to_send = 0;
 //            if (read_bytes > max_input_message_bytes || read_bytes == 0) {
 //                cout << "\t" << "INCOR " << read_bytes << endl;
@@ -587,6 +589,9 @@ private:
                                              this,
                                              boost::asio::placeholders::error,
                                              boost::asio::placeholders::bytes_transferred));
+        }
+        else {
+            receive_from_gui_send_to_server();
         }
     }
 
