@@ -1682,34 +1682,50 @@ private:
 
     void write_map_to_buffer(size_t& bytes_to_send, int map_type) {
         size_t size_to_send = players.size();
-        if (map_type == map_positions) size_to_send = player_positions.size();
-        else if (map_type == map_score) size_to_send = scores.size();
+        cout << "map players\n";
+        if (map_type == map_positions) {
+            size_to_send = player_positions.size();
+            cout << "map positions\n";
+        }
+        else if (map_type == map_score) {
+            size_to_send = scores.size();
+            cout << "map score\n";
+        }
 
         *(uint32_t *) (data_to_send_gui +
-                       bytes_to_send) = (uint32_t)(native_to_big(size_to_send));
+                       bytes_to_send) = (native_to_big((uint32_t )size_to_send));
         bytes_to_send += map_list_length;
+        cout << "map length: " << size_to_send << " b : " << bytes_to_send << endl;
 
         if (map_type == map_players) {
             for (auto &player: players) {
                 data_to_send_gui[bytes_to_send] = (char) player.first; // Player id
                 bytes_to_send++;
+                cout << "player id: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
 
                 const Player &player_data = player.second;
                 // Player name
                 data_to_send_gui[bytes_to_send] = (char) player_data.name.length();
                 bytes_to_send++;
+                cout << "player name length: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
+
 
                 strcpy(data_to_send_gui + bytes_to_send,
                        player_data.name.c_str());
+                cout << "player name: " << player_data.name << endl << " b " << bytes_to_send << endl;
                 bytes_to_send += player_data.name.length();
+
 
                 // Player address
                 data_to_send_gui[bytes_to_send] = (char) player_data.address.length();
+                cout << "address length: " << (int)data_to_send_gui[bytes_to_send] << " b " << bytes_to_send << endl;
                 bytes_to_send++;
 
                 strcpy(data_to_send_gui + bytes_to_send,
                        player_data.address.c_str());
                 bytes_to_send += player_data.address.length();
+                cout << "player address: " << player_data.address << endl;
+                cout << "player sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (map_type == map_positions) {
@@ -1726,6 +1742,7 @@ private:
                 *(uint16_t *) (data_to_send_gui +
                                bytes_to_send) = (native_to_big(current_position.y));
                 bytes_to_send += single_position_bytes;
+                cout << "position sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (map_type == map_score) {
@@ -1735,6 +1752,7 @@ private:
 
                 *(score_dt *)(data_to_send_gui + bytes_to_send) = native_to_big(player_score.second);
                 bytes_to_send += score_bytes;
+                cout << "score sent, bytes: " << endl;
             }
         }
     }
@@ -1747,12 +1765,20 @@ private:
     }
     void write_list_to_buffer(size_t& bytes_to_send, int list_type) {
         size_t length_to_send = blocks.size();
-        if (list_type == list_explosions) length_to_send = explosions_temp.size();
-        else if (list_type == list_bombs) length_to_send = bombs.size();
+        cout << "list blocks\n";
+        if (list_type == list_explosions) {
+            length_to_send = explosions_temp.size();
+            cout << "list explosions\n";
+        }
+        else if (list_type == list_bombs) {
+            length_to_send = bombs.size();
+            cout << "list bombs\n";
+        }
 
         *(uint32_t *) (data_to_send_gui +
-                       bytes_to_send) = (uint32_t)(native_to_big(length_to_send));
+                       bytes_to_send) = (native_to_big((uint32_t)length_to_send));
         bytes_to_send += map_list_length;
+        cout << "list length: " << length_to_send << endl;
 
         if (list_type == list_blocks) {
             for (const auto & block : blocks) {
@@ -1763,26 +1789,41 @@ private:
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(block.second);
                 bytes_to_send += single_position_bytes;
+                cout << "block send, bytes: " << bytes_to_send << endl;
             }
         }
         else if (list_type == list_bombs) {
             for (const auto & bomb : bombs) {
-                *(bomb_id_dt *) (data_to_send_gui + bytes_to_send) =
-                        native_to_big(bomb.first);
-                bytes_to_send += bomb_id_bytes;
+//                *(bomb_id_dt *) (data_to_send_gui + bytes_to_send) =
+//                        native_to_big(bomb.first);
+//                bytes_to_send += bomb_id_bytes;
+//
+//                Position bomb_position = bomb.second.coordinates;
+//                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+//                        native_to_big(bomb_position.x);
+//                bytes_to_send += single_position_bytes;
+//
+//                *(position_dt *) (data_to_send_gui + bytes_to_send) =
+//                        native_to_big(bomb_position.y);
+//                bytes_to_send += single_position_bytes;
+//
+//                *(timer_dt *) (data_to_send_gui + bytes_to_send) =
+//                        native_to_big(bomb.second.timer);
+//                bytes_to_send += timer_bytes;
+                Bomb bomb_data = bomb.second;
 
-                Position bomb_position = bomb.second.coordinates;
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
-                        native_to_big(bomb_position.x);
+                        native_to_big(bomb_data.coordinates.x);
                 bytes_to_send += single_position_bytes;
 
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
-                        native_to_big(bomb_position.y);
+                        native_to_big(bomb_data.coordinates.y);
                 bytes_to_send += single_position_bytes;
 
                 *(timer_dt *) (data_to_send_gui + bytes_to_send) =
-                        native_to_big(bomb.second.timer);
+                        native_to_big(bomb_data.timer);
                 bytes_to_send += timer_bytes;
+                cout << "bomb sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (list_type == list_explosions) {
@@ -1794,6 +1835,7 @@ private:
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(explosion.second);
                 bytes_to_send += single_position_bytes;
+                cout << "explosion sent, bytes: " << bytes_to_send << endl;
             }
         }
     }
@@ -1808,49 +1850,59 @@ private:
         }
         bytes_to_send++;
         // cout << bytes_to_send << endl;
+        cout << "type : " << bytes_to_send << endl;
 
         data_to_send_gui[bytes_to_send] = (char)game_status.server_name.length();
         // cout << "Written server length " << (int)data_to_send_gui[bytes_to_send] << endl;
         bytes_to_send++;
         // cout << bytes_to_send << endl;
+        cout << "s length : " << bytes_to_send << endl;
 
         strcpy(data_to_send_gui + bytes_to_send, game_status.server_name.c_str());
         // cout << "written to buffer: " << (data_to_send_gui + bytes_to_send) << endl;
         bytes_to_send += game_status.server_name.length();
         // cout << bytes_to_send << endl;
+        cout << "server : " << bytes_to_send << endl;
 
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
             bytes_to_send++;
+            cout << "p count : " << bytes_to_send << endl;
         }
         // cout << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_x));
         bytes_to_send += lobby_exc_pc_bytes;
+        cout << "size x : " << bytes_to_send << endl;
         // cout << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_y));
         bytes_to_send += lobby_exc_pc_bytes;
-        cout << bytes_to_send << endl;
+        // cout << bytes_to_send << endl;
+        cout << "size y : " << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.game_length));
         bytes_to_send += lobby_exc_pc_bytes;
         // cout << bytes_to_send << endl;
+        cout << "game length : " << bytes_to_send << endl;
 
         if (!is_Lobby) {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.turn));
             bytes_to_send += lobby_exc_pc_bytes;
             // cout << "not lobby " << bytes_to_send << endl;
+            cout << "turn : " << bytes_to_send << endl;
         }
         else {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.explosion_radius));
             bytes_to_send += lobby_exc_pc_bytes;
+            cout << "explosion radius : " << bytes_to_send << endl;
 
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.bomb_timer));
             bytes_to_send += lobby_exc_pc_bytes;
+            cout << "bomb timer : " << bytes_to_send << endl;
         }
 
         // players: Map<PlayerId, Player>
@@ -1879,10 +1931,13 @@ private:
             if (message_type == ServerMessage::Hello ||
                 message_type == ServerMessage::GameEnded
                 || message_type == ServerMessage::AcceptedPlayer) {
-                // if (message_type == ServerMessage::Hello) cout << "Send hello\n";
+                if (message_type == ServerMessage::Hello) cout << "LOBBY hello\n";
+                if (message_type == ServerMessage::AcceptedPlayer) cout << "LOBBY accepted\n";
+                if (message_type == ServerMessage::GameEnded) cout << "LOBBY game ended\n";
 
                 bytes_to_send = create_udp_message(true);
             } else {
+                cout << "GAME\n";
                 bytes_to_send = create_udp_message(false);
             }
 
@@ -1900,12 +1955,12 @@ private:
     }
 
     void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
-                           std::size_t) {
+                           std::size_t sent_bytes) {
         // Repeat the cycle
         //num_bytes_to_read_server = 1;
         //uint8_t message_type = temp_process_server_mess.server_current_message_id;
         //uint8_t message_type = message_id;
-        cout << "I have sent to gui\n";
+        cout << "I have sent to gui " << sent_bytes << "BYTES\n";
 
         if (message_id == ServerMessage::Turn) {
             death_per_turn_temp.clear();
