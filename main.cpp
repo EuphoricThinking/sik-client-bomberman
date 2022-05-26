@@ -45,13 +45,13 @@ void validate_input(string& temp_gui,
                     int64_t port, string& server_address) {
     if (std::count(temp_gui.begin(), temp_gui.end(), ':') < 1
         || std::count(server_address.begin(), server_address.end(), ':') < 1) {
-        cout << "address: " << temp_gui << endl;
-        cout << "Incorrect address format\nNeeds: <host_identificator>:<port>\n";
+        //cout << "address: " << temp_gui << endl;
+        cerr << "Incorrect address format\nNeeds: <host_identificator>:<port>\n";
 
         exit(1);
     }
     else if (port < u16_min || port > u16_max) {
-        cout << "Incorrect port value; should be in range [" << u16_min << ", "
+        cerr << "Incorrect port value; should be in range [" << u16_min << ", "
              << u16_max << "]\n";
         exit(1);
     }
@@ -112,7 +112,7 @@ void read_command_line_options(string& temp_gui, string& player_name,
 
             exit(0);
         } else if (chosen_options.size() < client_number_arguments) {
-            cout << "Incorrect number of arguments\n\n" << desc << endl;
+            cerr << "Incorrect number of arguments\n\n" << desc << endl;
 
             exit(1);
         } else {

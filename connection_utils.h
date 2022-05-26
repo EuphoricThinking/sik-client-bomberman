@@ -268,19 +268,19 @@ private:
     }
 
     void update_bomb_timers() {
-        cout << "UPDATE BOMB\n";
+//        cout << "UPDATE BOMB\n";
         for (auto iter = bombs.begin(); iter != bombs.end(); iter++) {
             Bomb& bomb_data = iter->second;
-            cout << "bef: " << bomb_data.timer << " after: ";
+//            cout << "bef: " << bomb_data.timer << " after: ";
             if (bomb_data.put_now) {
                 bomb_data.put_now = false;
             }
             else {
                 bomb_data.timer--;
             }
-            cout << bomb_data.timer << " | ";
+//            cout << bomb_data.timer << " | ";
         }
-        cout << endl;
+//        cout << endl;
     }
 
     bool in_range(int to_test, int upper_limit) {
@@ -313,7 +313,7 @@ private:
         if (exploded != bombs.end()) {
             position_dt centre_x = exploded->second.coordinates.x;
             position_dt centre_y = exploded->second.coordinates.y;
-            cout << "EXPLODE COORDINATES" << centre_x << " " << centre_y << endl;
+//            cout << "EXPLODE COORDINATES" << centre_x << " " << centre_y << endl;
 
             //position_dt upper_limit_x = game_status.size_x - 1;
             //position_dt upper_limit_y = game_status.size_y - 1;
@@ -609,24 +609,27 @@ private:
 
     void process_data_from_gui(const boost::system::error_code& error,
                                std::size_t read_bytes) {
-        cout << "\t" << "I have received GUI" << endl;
-        cout << InputMessage::PlaceBombGUI << " " << InputMessage::PlaceBlockGUI << " " << InputMessage::MoveGUI << endl;
+ //       cout << "\t" << "I have received GUI" << endl;
+  //      cout << InputMessage::PlaceBombGUI << " " << InputMessage::PlaceBlockGUI << " " << InputMessage::MoveGUI << endl;
         if ((!error || error == boost::asio::error::eof) && is_valid_gui_message(read_bytes)) {
-            cout << "\t" << "GUI received " << (int)received_data_gui[0] <<
-                "bytes: " << read_bytes << endl;
+ //           cout << "\t" << "GUI received " << (int)received_data_gui[0] <<
+  //              "bytes: " << read_bytes << endl;
             size_t bytes_to_send = 0;
+
+            //delete below
 //            if (read_bytes > max_input_message_bytes || read_bytes == 0) {
 //                cout << "\t" << "INCOR " << read_bytes << endl;
 //                cerr << "Incorrect GUI message length\n";
 //
 //                exit(1);
 //            }
+
             if (!gameStarted) {
                 data_to_send_server[0] = ClientMessage::Join;
                 bytes_to_send++;
 
                 data_to_send_server[bytes_to_send] = (char)player_name.length();
-                cout << "\t" << "JOIN sending player name length: " << data_to_send_server[bytes_to_send];
+//                cout << "\t" << "JOIN sending player name length: " << data_to_send_server[bytes_to_send];
                 bytes_to_send++;
 
                 strcpy(data_to_send_server + bytes_to_send, player_name.c_str());
@@ -637,7 +640,7 @@ private:
 
                 switch (message_type) {
                     case (InputMessage::PlaceBombGUI):
-                        cout << "\t" << "bomb\n";
+//                        cout << "\t" << "bomb\n";
                         validate_data_compare(read_bytes, 1, "Incorrect PlaceBomb gui message\n");
 
                         data_to_send_server[0] = ClientMessage::PlaceBomb;
@@ -646,7 +649,7 @@ private:
                         break;
 
                     case (InputMessage::PlaceBlockGUI):
-                        cout << "\t" << "block\n";
+//                        cout << "\t" << "block\n";
                         validate_data_compare(read_bytes, 1, "Incorrect PlaceBlock gui message\n");
 
                         data_to_send_server[0] = ClientMessage::PlaceBlock;
@@ -655,7 +658,7 @@ private:
                         break;
 
                     case (InputMessage::MoveGUI):
-                        cout << "\t" << "move\n";
+//                        cout << "\t" << "move\n";
                         data_to_send_server[0] = ClientMessage::Move;
                         bytes_to_send++;
 
@@ -666,7 +669,7 @@ private:
                 }
             }
 
-            cout << "\t" << "bytes to send: " << bytes_to_send << endl;
+//            cout << "\t" << "bytes to send: " << bytes_to_send << endl;
             // Send to server
             boost::asio::async_write(socket_tcp_,
                                      boost::asio::buffer(data_to_send_server, bytes_to_send),
@@ -684,13 +687,13 @@ private:
     void after_sent_data_to_server([[maybe_unused]] const boost::system::error_code& error,
                                    std::size_t) {
         // Receive from GUI - repeat the cycle
-        cout << "\t" << "I have sent data to server\n";
+//        cout << "\t" << "I have sent data to server\n";
         receive_from_gui_send_to_server();
     }
 
     void receive_from_gui_send_to_server() {
         // Receive from GUI
-        cout << "\t" << "I should receive\n";
+//        cout << "\t" << "I should receive\n";
         gui_socket_to_receive_.async_receive(
                 boost::asio::buffer(received_data_gui),
                 boost::bind(&Client_bomberman::process_data_from_gui, this,
@@ -722,18 +725,18 @@ private:
     void check_message_id(const boost::system::error_code& error,
                                    std::size_t read_bytes) {
         if (!error || error == boost::asio::error::eof) { //} || read_bytes > 0) {
-            cout << "\t" << "SERVER GAVE ME\n";
+//            cout << "\t" << "SERVER GAVE ME\n";
             uint8_t message_type = received_data_server[0];
-            cout << "\t" << (int)message_type << endl;
+//            cout << "\t" << (int)message_type << endl;
             // validate_server_mess_id(message_type);
-            cout << "\t" << read_bytes << endl;
+//            cout << "\t" << read_bytes << endl;
             validate_data_compare(read_bytes, 1, "No message id read\n");
 
             message_id = message_type;
 
             switch (message_type) {
                 case (ServerMessage::Hello):
-                    cout << "\t" << "S Hello\n";
+//                    cout << "\t" << "S Hello\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             string_length_info),
@@ -745,7 +748,7 @@ private:
                     break;
 
                 case (ServerMessage::AcceptedPlayer):
-                    cout << "\t" << "S Accepted player" << endl;
+//                    cout << "\t" << "S Accepted player" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             player_id_name_header_length),
@@ -759,7 +762,7 @@ private:
 
                 case (ServerMessage::GameStarted):
                     gameStarted = true;
-                    cout << "\t" << "S game started" << endl;
+ //                   cout << "\t" << "S game started" << endl;
 
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
@@ -772,7 +775,7 @@ private:
                     break;
 
                 case (ServerMessage::Turn):
-                    cout << "\t" << "S turn" << endl;
+//                    cout << "\t" << "S turn" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             turn_header),
@@ -784,7 +787,7 @@ private:
                     break;
 
                 case (ServerMessage::GameEnded):
-                    cout << "\t" << "S game ended" << endl;
+//                    cout << "\t" << "S game ended" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             map_list_length),
@@ -812,7 +815,7 @@ private:
             validate_data_compare(read_bytes, 1, "Hello: incorrect player name length\n");
 
             size_t read_length = received_data_server[0];
-            cout << "\t" << "RECEIVED LENGTH: " << read_length << endl;
+//            cout << "\t" << "RECEIVED LENGTH: " << read_length << endl;
 
             boost::asio::async_read(socket_tcp_,
                     boost::asio::buffer(received_data_server,
@@ -836,7 +839,7 @@ private:
                 game_status.server_name = std::string(received_data_server,
                                           received_data_server + read_bytes);
             }
-            cout << "\t" << "|" << game_status.server_name << "|" << endl;
+//            cout << "\t" << "|" << game_status.server_name << "|" << endl;
 
             boost::asio::async_read(socket_tcp_,
                 boost::asio::buffer(received_data_server,
@@ -859,7 +862,7 @@ private:
             game_status.players_count = received_data_server[0];
 
             // cout << "\t" << "players READ\n";
-            cout << "\t" << received_data_server[0] << endl;
+//            cout << "\t" << received_data_server[0] << endl;
             // cout << "\t" << "|" << (uint8_t)game_status.players_count << "|" << endl;
 
             move_further_in_buffer++;
@@ -967,7 +970,7 @@ private:
             players.insert(make_pair(player_id, Player{player_name_temp, player_address}));
             scores.insert(make_pair(player_id, 0));// TODO added
 
-            printPlayer(player_id, player_name_temp, player_address);
+            // printPlayer(player_id, player_name_temp, player_address);
 
             if (--num_repetitions > 0) {
                 boost::asio::async_read(socket_tcp_,
@@ -1059,7 +1062,7 @@ private:
 
             switch(event_id) {
                 case (Events::BombPlaced):
-                    cout << "E bomb placed\n";
+//                    cout << "E bomb placed\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1074,7 +1077,7 @@ private:
                     break;
 
                 case (Events::BombExploded):
-                    cout << "E bomb exploded\n";
+//                    cout << "E bomb exploded\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1089,7 +1092,7 @@ private:
                     break;
 
                 case (Events::PlayerMoved):
-                    cout << "E player moved\n";
+//                    cout << "E player moved\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1104,7 +1107,7 @@ private:
                     break;
 
                 case (Events::BlockPlaced):
-                    cout << "E block placed\n";
+//                    cout << "E block placed\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1396,15 +1399,15 @@ private:
             position_dt y = big_to_native(*(position_dt*)
                     (received_data_server + player_id_bytes + single_position_bytes));
 
-            cout << "\t" << "turn: player id:" << (int)player_id << endl;
+//            cout << "\t" << "turn: player id:" << (int)player_id << endl;
 
             auto iterPlayer = player_positions.find(player_id);
             if (iterPlayer != player_positions.end()) {
                 Position & temp_pos = iterPlayer->second;
-                cout << "\t" << "WAS HERE: " << temp_pos.x << " " << temp_pos.y << endl;
+ //               cout << "\t" << "WAS HERE: " << temp_pos.x << " " << temp_pos.y << endl;
                 temp_pos.x = x;
                 temp_pos.y = y;
-                cout << "\t" << "NOW: " << temp_pos.x << " " << temp_pos.y << endl;
+ //               cout << "\t" << "NOW: " << temp_pos.x << " " << temp_pos.y << endl;
             }
             else {
                 player_positions.insert(make_pair(player_id,
@@ -1513,7 +1516,7 @@ private:
             score_dt score = big_to_native(*(score_dt *)
                     (received_data_server + player_id_bytes));
 
-            cout << "\t" << "game ended player id " << player_id << endl;
+//            cout << "\t" << "game ended player id " << player_id << endl;
 
             auto iter = scores.find(player_id);
             if (iter != scores.end()) {
@@ -1834,56 +1837,56 @@ private:
 
     void write_map_to_buffer(size_t& bytes_to_send, int map_type) {
         size_t size_to_send = players.size();
-        cout << "\t" << "map players\n";
+//        cout << "\t" << "map players\n";
         if (map_type == map_positions) {
             size_to_send = player_positions.size();
-            cout << "\t" << "map positions\n";
+//            cout << "\t" << "map positions\n";
         }
         else if (map_type == map_score) {
             size_to_send = scores.size();
-            cout << "\t" << "map score\n";
+ //           cout << "\t" << "map score\n";
         }
 
         *(uint32_t *) (data_to_send_gui +
                        bytes_to_send) = (native_to_big((uint32_t )size_to_send));
         bytes_to_send += map_list_length;
-        cout << "\t" << "map length: " << size_to_send << " b : " << bytes_to_send << endl;
+//        cout << "\t" << "map length: " << size_to_send << " b : " << bytes_to_send << endl;
 
         if (map_type == map_players) {
             for (auto &player: players) {
                 data_to_send_gui[bytes_to_send] = (char) player.first; // Player id
                 bytes_to_send++;
-                cout << "\t" << "player id: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
+ //               cout << "\t" << "player id: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
 
                 const Player &player_data = player.second;
                 // Player name
                 data_to_send_gui[bytes_to_send] = (char) player_data.name.length();
                 bytes_to_send++;
-                cout << "\t" << "player name length: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
+//                cout << "\t" << "player name length: " << (int)data_to_send_gui[bytes_to_send - 1] << " b " << bytes_to_send << endl;
 
 
                 strcpy(data_to_send_gui + bytes_to_send,
                        player_data.name.c_str());
-                cout << "\t" << "player name: " << player_data.name << endl << " b " << bytes_to_send << endl;
+ //               cout << "\t" << "player name: " << player_data.name << endl << " b " << bytes_to_send << endl;
                 bytes_to_send += player_data.name.length();
 
 
                 // Player address
                 data_to_send_gui[bytes_to_send] = (char) player_data.address.length();
-                cout << "\t" << "address length: " << (int)data_to_send_gui[bytes_to_send] << " b " << bytes_to_send << endl;
+ //               cout << "\t" << "address length: " << (int)data_to_send_gui[bytes_to_send] << " b " << bytes_to_send << endl;
                 bytes_to_send++;
 
                 strcpy(data_to_send_gui + bytes_to_send,
                        player_data.address.c_str());
                 bytes_to_send += player_data.address.length();
-                cout << "\t" << "player address: " << player_data.address << endl;
-                cout << "\t" << "player sent, bytes: " << bytes_to_send << endl;
+//                cout << "\t" << "player address: " << player_data.address << endl;
+ //               cout << "\t" << "player sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (map_type == map_positions) {
             for (auto & player_position : player_positions) {
                 data_to_send_gui[bytes_to_send] = (char)player_position.first;
-                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " ";
+//                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " ";
                 bytes_to_send++;
 
                 Position current_position = player_position.second;
@@ -1895,20 +1898,20 @@ private:
                 *(uint16_t *) (data_to_send_gui +
                                bytes_to_send) = (native_to_big(current_position.y));
                 bytes_to_send += single_position_bytes;
-                cout << "position: " << current_position.x << " " << current_position.y << endl;
-                cout << "\t" << "position sent, bytes: " << bytes_to_send << endl;
+//                cout << "position: " << current_position.x << " " << current_position.y << endl;
+ //               cout << "\t" << "position sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (map_type == map_score) {
             for (auto & player_score : scores) {
                 data_to_send_gui[bytes_to_send] = (char)player_score.first;
-                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " score " << player_score.second << endl;
+//                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " score " << player_score.second << endl;
 
                 bytes_to_send++;
 
                 *(score_dt *)(data_to_send_gui + bytes_to_send) = native_to_big(player_score.second);
                 bytes_to_send += score_bytes;
-                cout << "\t" << "score sent, bytes: " << endl;
+//                cout << "\t" << "score sent, bytes: " << endl;
             }
         }
     }
@@ -1921,20 +1924,20 @@ private:
     }
     void write_list_to_buffer(size_t& bytes_to_send, int list_type) {
         size_t length_to_send = blocks.size();
-        cout << "\t" << "list blocks\n";
+//        cout << "\t" << "list blocks\n";
         if (list_type == list_explosions) {
             length_to_send = explosions_temp.size();
-            cout << "\t" << "list explosions\n";
+//            cout << "\t" << "list explosions\n";
         }
         else if (list_type == list_bombs) {
             length_to_send = bombs.size();
-            cout << "\t" << "list bombs\n";
+//            cout << "\t" << "list bombs\n";
         }
 
         *(uint32_t *) (data_to_send_gui +
                        bytes_to_send) = (native_to_big((uint32_t)length_to_send));
         bytes_to_send += map_list_length;
-        cout << "\t" << "list length: " << length_to_send << endl;
+//        cout << "\t" << "list length: " << length_to_send << endl;
 
         if (list_type == list_blocks) {
             for (const auto & block : blocks) {
@@ -1945,8 +1948,8 @@ private:
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(block.second);
                 bytes_to_send += single_position_bytes;
-                cout << "block position: " << block.first << " " << block.second << endl;
-                cout << "\t" << "block send, bytes: " << bytes_to_send << endl;
+//                cout << "block position: " << block.first << " " << block.second << endl;
+ //               cout << "\t" << "block send, bytes: " << bytes_to_send << endl;
             }
         }
         else if (list_type == list_bombs) {
@@ -1980,8 +1983,8 @@ private:
                 *(timer_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(bomb_data.timer);
                 bytes_to_send += timer_bytes;
-                cout << "bomb pos: " << bomb_data.coordinates.x << " " << bomb_data.coordinates.y << " timer " << bomb_data.timer << endl;
-                cout << "\t" << "bomb sent, bytes: " << bytes_to_send << endl;
+//                cout << "bomb pos: " << bomb_data.coordinates.x << " " << bomb_data.coordinates.y << " timer " << bomb_data.timer << endl;
+ //               cout << "\t" << "bomb sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (list_type == list_explosions) {
@@ -1993,7 +1996,7 @@ private:
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(explosion.second);
                 bytes_to_send += single_position_bytes;
-                cout << "\t" << "explosion sent, bytes: " << bytes_to_send << endl;
+//                cout << "\t" << "explosion sent, bytes: " << bytes_to_send << endl;
             }
         }
     }
@@ -2008,59 +2011,59 @@ private:
         }
         bytes_to_send++;
         // cout << "\t" << bytes_to_send << endl;
-        cout << "\t" << "type : " << bytes_to_send << endl;
+//        cout << "\t" << "type : " << bytes_to_send << endl;
 
         data_to_send_gui[bytes_to_send] = (char)game_status.server_name.length();
         // cout << "\t" << "Written server length " << (int)data_to_send_gui[bytes_to_send] << endl;
         bytes_to_send++;
         // cout << "\t" << bytes_to_send << endl;
-        cout << "\t" << "s length : " << bytes_to_send << endl;
+//        cout << "\t" << "s length : " << bytes_to_send << endl;
 
         strcpy(data_to_send_gui + bytes_to_send, game_status.server_name.c_str());
         // cout << "\t" << "written to buffer: " << (data_to_send_gui + bytes_to_send) << endl;
         bytes_to_send += game_status.server_name.length();
         // cout << "\t" << bytes_to_send << endl;
-        cout << "\t" << "server : " << bytes_to_send << endl;
+//        cout << "\t" << "server : " << bytes_to_send << endl;
 
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
             bytes_to_send++;
-            cout << "\t" << "p count : " << bytes_to_send << endl;
+//            cout << "\t" << "p count : " << bytes_to_send << endl;
         }
         // cout << "\t" << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_x));
         bytes_to_send += lobby_exc_pc_bytes;
-        cout << "\t" << "size x : " << bytes_to_send << endl;
+//        cout << "\t" << "size x : " << bytes_to_send << endl;
         // cout << "\t" << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_y));
         bytes_to_send += lobby_exc_pc_bytes;
         // cout << "\t" << bytes_to_send << endl;
-        cout << "\t" << "size y : " << bytes_to_send << endl;
+//        cout << "\t" << "size y : " << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.game_length));
         bytes_to_send += lobby_exc_pc_bytes;
         // cout << "\t" << bytes_to_send << endl;
-        cout << "\t" << "game length : " << bytes_to_send << endl;
+ //       cout << "\t" << "game length : " << bytes_to_send << endl;
 
         if (!is_Lobby) {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.turn));
             bytes_to_send += lobby_exc_pc_bytes;
             // cout << "\t" << "not lobby " << bytes_to_send << endl;
-            cout << "\t" << "turn : " << bytes_to_send << endl;
+//            cout << "\t" << "turn : " << bytes_to_send << endl;
         }
         else {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.explosion_radius));
             bytes_to_send += lobby_exc_pc_bytes;
-            cout << "\t" << "explosion radius : " << bytes_to_send << endl;
+//            cout << "\t" << "explosion radius : " << bytes_to_send << endl;
 
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.bomb_timer));
             bytes_to_send += lobby_exc_pc_bytes;
-            cout << "\t" << "bomb timer : " << bytes_to_send << endl;
+//            cout << "\t" << "bomb timer : " << bytes_to_send << endl;
         }
 
         // players: Map<PlayerId, Player>
@@ -2080,7 +2083,7 @@ private:
 
     void process_data_from_server_send_to_gui() {
         //uint8_t message_type = temp_process_server_mess.server_current_message_id;
-        cout << "\t" << "I should send to gui\n";
+//        cout << "\t" << "I should send to gui\n";
         uint8_t message_type = message_id;
 
         if (message_type != ServerMessage::GameStarted) {
@@ -2089,17 +2092,17 @@ private:
             if (message_type == ServerMessage::Hello ||
                 message_type == ServerMessage::GameEnded
                 || message_type == ServerMessage::AcceptedPlayer) {
-                if (message_type == ServerMessage::Hello) cout << "\t" << "LOBBY hello\n";
-                if (message_type == ServerMessage::AcceptedPlayer) cout << "\t" << "LOBBY accepted\n";
-                if (message_type == ServerMessage::GameEnded) cout << "\t" << "LOBBY game ended\n";
+//                if (message_type == ServerMessage::Hello) cout << "\t" << "LOBBY hello\n";
+//                if (message_type == ServerMessage::AcceptedPlayer) cout << "\t" << "LOBBY accepted\n";
+ //               if (message_type == ServerMessage::GameEnded) cout << "\t" << "LOBBY game ended\n";
 
                 bytes_to_send = create_udp_message(true);
             } else {
-                cout << "\t" << "GAME\n";
+ //               cout << "\t" << "GAME\n";
                 bytes_to_send = create_udp_message(false);
             }
 
-            cout << "\t" << "sending bytes: " << bytes_to_send << "\n\n";
+//            cout << "\t" << "sending bytes: " << bytes_to_send << "\n\n";
             //printGameData(game_status);
             //cout << "\t" <<"\n\n";
             //print_whole_message(bytes_to_send);
@@ -2113,12 +2116,12 @@ private:
     }
 
     void after_send_to_gui([[maybe_unused]] const boost::system::error_code& error,
-                           std::size_t sent_bytes) {
+                           [[maybe_unused]] std::size_t sent_bytes) {
         // Repeat the cycle
         //num_bytes_to_read_server = 1;
         //uint8_t message_type = temp_process_server_mess.server_current_message_id;
         //uint8_t message_type = message_id;
-        cout << "\t" << "I have sent to gui " << sent_bytes << "BYTES\n";
+//        cout << "\t" << "I have sent to gui " << sent_bytes << "BYTES\n";
 
         if (message_id == ServerMessage::Turn) {
             death_per_turn_temp.clear();
@@ -2161,22 +2164,22 @@ public:
         // bombs()
 {
         try {
-            cout << "\t" << "buffer size: " << sizeof(received_data_server) << endl;
+ //           cout << "\t" << "buffer size: " << sizeof(received_data_server) << endl;
             memset(received_data_server, 0, tcp_buff_default);
             //gui_endpoint_to_send_ = *udp_resolver_.resolve(udp::resolver::query(gui_name)).begin();
-            cout << "\t" << "entered client" << endl;
+//            cout << "\t" << "entered client" << endl;
             boost::asio::ip::tcp::no_delay option(true);
-            cout << "\t" << "Found option" << endl;
+//            cout << "\t" << "Found option" << endl;
             //socket_tcp_.set_option(option);
-            cout << "\t" << "Set option " << server_name << " " << server_port << endl;
+//            cout << "\t" << "Set option " << server_name << " " << server_port << endl;
 
             tcp::resolver::results_type server_endpoints_ =
                     tcp_resolver_.resolve(server_name, server_port); // tcp::v6()
-            cout << "\t" << server_endpoints_->host_name() << ": " << server_endpoints_->service_name() << endl;
-            cout << "\t" << "tcp resolved" << endl;
+ //           cout << "\t" << server_endpoints_->host_name() << ": " << server_endpoints_->service_name() << endl;
+ //           cout << "\t" << "tcp resolved" << endl;
             boost::asio::connect(socket_tcp_, server_endpoints_);
             socket_tcp_.set_option(option);
-            cout << "\t" << "tcp connected" << endl;
+//            cout << "\t" << "tcp connected" << endl;
 
 
  /*            auto endpoints = tcp_resolver_.resolve(server_name, server_port);
@@ -2185,9 +2188,9 @@ public:
             socket_tcp_.set_option(option); */
 
             udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port); // udp::v6()
-            cout << "\t" << "udp endpoints resolved\n";
+//            cout << "\t" << "udp endpoints resolved\n";
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
-            cout << "\t" << "udp connected" << endl;
+//            cout << "\t" << "udp connected" << endl;
 
 
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
