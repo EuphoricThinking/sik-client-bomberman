@@ -1251,8 +1251,10 @@ private:
             auto iterPlayer = player_positions.find(player_id);
             if (iterPlayer != player_positions.end()) {
                 Position & temp_pos = iterPlayer->second;
+                cout << "WAS HERE: " << temp_pos.x << " " << temp_pos.y << endl;
                 temp_pos.x = x;
                 temp_pos.y = y;
+                cout << "NOW: " << temp_pos.x << " " << temp_pos.y << endl;
             }
             else {
                 player_positions.insert(make_pair(player_id,
