@@ -485,7 +485,7 @@ private:
                                std::size_t read_bytes) {
         cout << "I have received" << endl;
         if (!error || error == boost::asio::error::eof) {
-            cout << received_data_gui[0] << endl;
+            cout << "GUI received " << received_data_gui[0] << endl;
             size_t bytes_to_send = 0;
 
             if (read_bytes > max_input_message_bytes || read_bytes == 0) {
@@ -506,6 +506,7 @@ private:
 
                 switch (message_type) {
                     case (InputMessage::PlaceBombGUI):
+                        cout << "bomb\n";
                         validate_data_compare(read_bytes, 1, "Incorrect PlaceBomb gui message\n");
 
                         data_to_send_server[0] = ClientMessage::PlaceBomb;
@@ -514,6 +515,7 @@ private:
                         break;
 
                     case (InputMessage::PlaceBlockGUI):
+                        cout << "block\n";
                         validate_data_compare(read_bytes, 1, "Incorrect PlaceBlock gui message\n");
 
                         data_to_send_server[0] = ClientMessage::PlaceBlock;
@@ -522,6 +524,7 @@ private:
                         break;
 
                     case (InputMessage::MoveGUI):
+                        cout << "move\n";
                         data_to_send_server[0] = ClientMessage::Move;
                         bytes_to_send++;
 
@@ -533,7 +536,7 @@ private:
                 }
             }
 
-
+            cout << "bytes to send: " << bytes_to_send << endl;
             // Send to server
             boost::asio::async_write(socket_tcp_,
                                      boost::asio::buffer(data_to_send_server, bytes_to_send),
@@ -548,6 +551,7 @@ private:
     void after_sent_data_to_server([[maybe_unused]] const boost::system::error_code& error,
                                    std::size_t) {
         // Receive from GUI - repeat the cycle
+        cout << "I have sent data to server\n";
         receive_from_gui_send_to_server();
     }
 
@@ -1877,16 +1881,18 @@ public:
             boost::asio::connect(socket_tcp_, server_endpoints_);
             socket_tcp_.set_option(option);
             cout << "tcp connected" << endl;
-/*            auto endpoints = tcp_resolver_.resolve(server_name, server_port);
+
+
+ /*            auto endpoints = tcp_resolver_.resolve(server_name, server_port);
             socket_tcp_.open(tcp::v6());
             socket_tcp_.connect(endpoints->endpoint());
             socket_tcp_.set_option(option); */
 
- /*           udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
+            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
             cout << "udp endpoints resolved\n";
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
             cout << "udp connected" << endl;
- */
+
 
             //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
             //socket_udp_.open(udp::v6());
@@ -1895,10 +1901,11 @@ public:
             //auto endpoints = res.resolve(host, port)
             //gui_output.open(udp::v6())
             //gui_output.connect(endpoints->endpoint())
-            auto endpoints = udp_resolver_.resolve(gui_name, gui_port);
+
+/*            auto endpoints = udp_resolver_.resolve(gui_name, gui_port);
             socket_udp_.open(udp::v6());
             socket_udp_.connect(endpoints->endpoint());
-
+*/
             //gui_input(io_context, udp::endpoint(udp::v6(), port))
 
             receive_from_server_send_to_gui();
