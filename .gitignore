@@ -8,3 +8,5 @@ Makefile
 libconnection_utils.a
 testy-zad2/
 robots-client
+libinput_utils.a
+to_copy.sh
