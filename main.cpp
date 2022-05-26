@@ -43,8 +43,9 @@ void print_saved_arguments(string& temp_gui, string& player_name,
 
 void validate_input(string& temp_gui,
                     int64_t port, string& server_address) {
-    if (std::count(temp_gui.begin(), temp_gui.end(), ':') != 1
-        || std::count(server_address.begin(), server_address.end(), ':') != 1) {
+    if (std::count(temp_gui.begin(), temp_gui.end(), ':') < 1
+        || std::count(server_address.begin(), server_address.end(), ':') < 1) {
+        cout << "address: " << temp_gui << endl;
         cout << "Incorrect address format\nNeeds: <host_identificator>:<port>\n";
 
         exit(1);
