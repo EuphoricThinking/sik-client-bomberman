@@ -609,7 +609,7 @@ private:
 
             switch (message_type) {
                 case (ServerMessage::Hello):
-                    cout << "Hello\n";
+                    cout << "S Hello\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             string_length_info),
@@ -621,6 +621,7 @@ private:
                     break;
 
                 case (ServerMessage::AcceptedPlayer):
+                    cout << "S Accepted player" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             player_id_name_header_length),
@@ -634,6 +635,7 @@ private:
 
                 case (ServerMessage::GameStarted):
                     gameStarted = true;
+                    cout << "S game started" << endl;
 
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
@@ -646,6 +648,7 @@ private:
                     break;
 
                 case (ServerMessage::Turn):
+                    cout << "S turn" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             turn_header),
@@ -657,6 +660,7 @@ private:
                     break;
 
                 case (ServerMessage::GameEnded):
+                    cout << "S game ended" << endl;
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             map_list_length),
@@ -858,6 +862,8 @@ private:
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
                                 map_length));
+
+            receive_from_server_send_to_gui(); //TODO added
         }
     }
 
@@ -1707,7 +1713,7 @@ private:
     }
 
     void print_whole_message(size_t num_bytes) {
-        for (int i = 0; i < num_bytes; i++) {
+        for (size_t i = 0; i < num_bytes; i++) {
             cout << data_to_send_gui[i] << " ";
         }
         cout << endl;
