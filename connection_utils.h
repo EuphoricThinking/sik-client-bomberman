@@ -313,6 +313,7 @@ private:
         if (exploded != bombs.end()) {
             position_dt centre_x = exploded->second.coordinates.x;
             position_dt centre_y = exploded->second.coordinates.y;
+            cout << "EXPLODE COORDINATES" << centre_x << " " << centre_y << endl;
 
             //position_dt upper_limit_x = game_status.size_x - 1;
             //position_dt upper_limit_y = game_status.size_y - 1;
