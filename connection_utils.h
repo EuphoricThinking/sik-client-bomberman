@@ -90,6 +90,17 @@ typedef struct GameData {
     uint16_t bomb_timer = 0;
 } GameData;
 
+void printGameData(GameData g) {
+    cout << "server name: " << g.server_name << endl;
+    cout << "players count: " << g.players_count << endl;
+    cout << "size x: " << g.size_x << endl;
+    cout << "size y: " << g.size_y << endl;
+    cout << "game length: " << g.game_length << endl;
+    cout << "turn: " << g.turn << endl;
+    cout << "explosion radius: " << g.explosion_radius <<  endl;
+    cout << "bomb timer: " << g.bomb_timer << endl;
+}
+
 typedef struct ServerMessageData {
     uint8_t server_current_message_id = def_no_message;
 
@@ -589,6 +600,7 @@ private:
     void check_message_id(const boost::system::error_code& error,
                                    std::size_t read_bytes) {
         if (!error || error == boost::asio::error::eof) { //} || read_bytes > 0) {
+            cout << "SERVER GAVE ME\n";
             uint8_t message_type = received_data_server[0];
             validate_server_mess_id(message_type);
             validate_data_compare(read_bytes, 1, "No message id read\n");
@@ -597,6 +609,7 @@ private:
 
             switch (message_type) {
                 case (ServerMessage::Hello):
+                    cout << "Hello\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(received_data_server,
                                             string_length_info),
@@ -709,6 +722,10 @@ private:
             size_t move_further_in_buffer = 0;
 
             game_status.players_count = received_data_server[0];
+
+            cout << "players READ\n";
+            cout << received_data_server[0] << endl;
+            cout << "|" << (uint8_t)game_status.players_count << "|" << endl;
 
             move_further_in_buffer++;
             game_status.size_x = big_to_native(*(uint16_t*)
@@ -1741,13 +1758,22 @@ private:
     }
 
     size_t create_udp_message(bool is_Lobby) {
-        size_t bytes_to_send = 0;
 
-        data_to_send_gui[0] = (char)server_name.length();
+        size_t bytes_to_send = 0;
+        if (is_Lobby) {
+            data_to_send_gui[bytes_to_send] = DrawMessage::Lobby;
+        }
+        else {
+            data_to_send_gui[bytes_to_send] = DrawMessage::Game;
+        }
         bytes_to_send++;
 
-        strcpy(data_to_send_gui + bytes_to_send, server_name.c_str());
-        bytes_to_send += server_name.length();
+        data_to_send_gui[bytes_to_send] = (char)game_status.server_name.length();
+        cout << "Written server length " << (int)data_to_send_gui[bytes_to_send] << endl;
+        bytes_to_send++;
+
+        strcpy(data_to_send_gui + bytes_to_send, game_status.server_name.c_str());
+        bytes_to_send += game_status.server_name.length();
 
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
@@ -1804,11 +1830,16 @@ private:
             if (message_type == ServerMessage::Hello ||
                 message_type == ServerMessage::GameEnded
                 || message_type == ServerMessage::AcceptedPlayer) {
+                if (message_type == ServerMessage::Hello) cout << "Send hello\n";
+
                 bytes_to_send = create_udp_message(true);
             } else {
                 bytes_to_send = create_udp_message(false);
             }
 
+            cout << "sending bytes: " << bytes_to_send << "\n\n";
+            printGameData(game_status);
+            cout <<"\n\n";
             socket_udp_.async_send(
                     boost::asio::buffer(data_to_send_gui, bytes_to_send),
                     boost::bind(&Client_bomberman::after_send_to_gui,
@@ -1876,7 +1907,8 @@ public:
             cout << "Set option " << server_name << " " << server_port << endl;
 
             tcp::resolver::results_type server_endpoints_ =
-                    tcp_resolver_.resolve(tcp::v6(), server_name, server_port);
+                    tcp_resolver_.resolve(tcp::v4(), server_name, server_port);
+            cout << server_endpoints_->host_name() << ": " << server_endpoints_->service_name() << endl;
             cout << "tcp resolved" << endl;
             boost::asio::connect(socket_tcp_, server_endpoints_);
             socket_tcp_.set_option(option);
