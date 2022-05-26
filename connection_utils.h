@@ -292,6 +292,21 @@ private:
         }
     }
 
+    bool check_if_possible_to_propagate(int potential_x, int potential_y) {
+        if (in_range(potential_x, game_status.size_x)
+            && in_range(potential_y, game_status.size_y)
+            && blocks_exploded_temp.find(make_pair(potential_x, potential_y))
+            == blocks_exploded_temp.end()) {
+                explosions_temp.insert(make_pair(potential_x,
+                                             potential_y));
+
+                return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     void add_explosion_cross(bomb_id_dt exploding_bomb_id) {
         auto exploded = bombs.find(exploding_bomb_id);
 
@@ -301,30 +316,22 @@ private:
 
             //position_dt upper_limit_x = game_status.size_x - 1;
             //position_dt upper_limit_y = game_status.size_y - 1;
-            explosions_temp.insert(make_pair(centre_x, centre_y));
-            
-            for (position_dt coordinate: {centre_x, centre_y}) {
-                for (int sign : {-1, 1}) {
-                    for (int range = 1; range <= game_status.explosion_radius; range++) {
-                        //bool found_block = false;
-                        int potential_x = centre_x + (sign)*range;
-                        int potential_y = centre_y + (sign)*range;
+            //explosions_temp.insert(make_pair(centre_x, centre_y)); // TODO check if needed
 
-                        if (in_range(potential_x, game_status.size_x)
-                            && in_range(potential_y, game_status.size_y)
-                            && blocks_exploded_temp.find(
-                                    make_pair(potential_x, potential_y))
-                            != blocks_exploded_temp.end()) {
-                                explosions_temp.insert(make_pair(potential_x,
-                                                                 potential_y));
-                        }
-                        else {
-                            break;
-                        }
+            for (int potential_x = ((int)centre_x) - game_status.explosion_radius;
+                 potential_x <= ((int)centre_x) + game_status.explosion_radius;
+                 potential_x++) {
+                    if (!check_if_possible_to_propagate(potential_x, centre_y)) {
+                        break;
                     }
-                }
+            }
 
-                // TODO ERASE BOMB
+            for (int potential_y = ((int)centre_y) - game_status.explosion_radius;
+                 potential_y <= ((int)centre_y) + game_status.explosion_radius;
+                 potential_y++) {
+                    if (!check_if_possible_to_propagate(centre_x, potential_y)) {
+                        break;
+                    }
             }
 
             //return true;
@@ -2099,6 +2106,7 @@ private:
         if (message_id == ServerMessage::Turn) {
             death_per_turn_temp.clear();
             explosions_temp.clear();
+            blocks_exploded_temp.clear();
         }
         else if (message_id == ServerMessage::GameEnded) {
             scores.clear();
