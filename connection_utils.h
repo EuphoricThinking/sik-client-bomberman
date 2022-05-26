@@ -679,6 +679,7 @@ private:
             validate_data_compare(read_bytes, 1, "Hello: incorrect player name length\n");
 
             size_t read_length = received_data_server[0];
+            cout << "RECEIVED LENGTH: " << read_length << endl;
 
             boost::asio::async_read(socket_tcp_,
                     boost::asio::buffer(received_data_server,
@@ -702,6 +703,7 @@ private:
                 game_status.server_name = std::string(received_data_server,
                                           received_data_server + read_bytes);
             }
+            cout << "|" << game_status.server_name << "|" << endl;
 
             boost::asio::async_read(socket_tcp_,
                 boost::asio::buffer(received_data_server,
@@ -1704,6 +1706,12 @@ private:
         }
     }
 
+    void print_whole_message(size_t num_bytes) {
+        for (int i = 0; i < num_bytes; i++) {
+            cout << data_to_send_gui[i] << " ";
+        }
+        cout << endl;
+    }
     void write_list_to_buffer(size_t& bytes_to_send, int list_type) {
         size_t length_to_send = blocks.size();
         if (list_type == list_explosions) length_to_send = explosions_temp.size();
@@ -1758,7 +1766,6 @@ private:
     }
 
     size_t create_udp_message(bool is_Lobby) {
-
         size_t bytes_to_send = 0;
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = DrawMessage::Lobby;
@@ -1767,32 +1774,41 @@ private:
             data_to_send_gui[bytes_to_send] = DrawMessage::Game;
         }
         bytes_to_send++;
+        cout << bytes_to_send << endl;
 
         data_to_send_gui[bytes_to_send] = (char)game_status.server_name.length();
         cout << "Written server length " << (int)data_to_send_gui[bytes_to_send] << endl;
         bytes_to_send++;
+        cout << bytes_to_send << endl;
 
         strcpy(data_to_send_gui + bytes_to_send, game_status.server_name.c_str());
+        cout << "written to buffer: " << (data_to_send_gui + bytes_to_send) << endl;
         bytes_to_send += game_status.server_name.length();
+        cout << bytes_to_send << endl;
 
         if (is_Lobby) {
             data_to_send_gui[bytes_to_send] = (char)game_status.players_count;
             bytes_to_send++;
         }
+        cout << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_x));
         bytes_to_send += lobby_exc_pc_bytes;
+        cout << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.size_y));
         bytes_to_send += lobby_exc_pc_bytes;
+        cout << bytes_to_send << endl;
 
         *(uint16_t*)(data_to_send_gui + bytes_to_send) = (native_to_big(game_status.game_length));
         bytes_to_send += lobby_exc_pc_bytes;
+        cout << bytes_to_send << endl;
 
         if (!is_Lobby) {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
                     game_status.turn));
             bytes_to_send += lobby_exc_pc_bytes;
+            cout << "not lobby " << bytes_to_send << endl;
         }
         else {
             *(uint16_t *) (data_to_send_gui + bytes_to_send) = (native_to_big(
@@ -1840,6 +1856,7 @@ private:
             cout << "sending bytes: " << bytes_to_send << "\n\n";
             printGameData(game_status);
             cout <<"\n\n";
+            print_whole_message(bytes_to_send);
             socket_udp_.async_send(
                     boost::asio::buffer(data_to_send_gui, bytes_to_send),
                     boost::bind(&Client_bomberman::after_send_to_gui,
