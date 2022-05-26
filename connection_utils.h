@@ -77,6 +77,7 @@ typedef struct Position {
 typedef struct Bomb {
     Position coordinates;
     uint16_t timer;
+    uint8_t put_now;
 } Bomb;
 
 typedef struct GameData {
@@ -266,10 +267,19 @@ private:
     }
 
     void update_bomb_timers() {
+        cout << "UPDATE BOMB\n";
         for (auto iter = bombs.begin(); iter != bombs.end(); iter++) {
             Bomb& bomb_data = iter->second;
-            bomb_data.timer--;
+            cout << "bef: " << bomb_data.timer << " after: ";
+            if (bomb_data.put_now) {
+                bomb_data.put_now = false;
+            }
+            else {
+                bomb_data.timer--;
+            }
+            cout << bomb_data.timer << " | ";
         }
+        cout << endl;
     }
 /*    void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
@@ -973,6 +983,7 @@ private:
 
             switch(event_id) {
                 case (Events::BombPlaced):
+                    cout << "E bomb placed\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -987,6 +998,7 @@ private:
                     break;
 
                 case (Events::BombExploded):
+                    cout << "E bomb exploded\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1001,6 +1013,7 @@ private:
                     break;
 
                 case (Events::PlayerMoved):
+                    cout << "E player moved\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1015,6 +1028,7 @@ private:
                     break;
 
                 case (Events::BlockPlaced):
+                    cout << "E block placed\n";
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
                                 received_data_server,
@@ -1060,7 +1074,7 @@ private:
                     (received_data_server + bomb_id_bytes + single_position_bytes));
 
             bombs.insert(make_pair(temp_bomb_id,
-                                   Bomb{Position{x, y}, game_status.bomb_timer}));
+                                   Bomb{Position{x, y}, game_status.bomb_timer, true}));
 
             if (--num_repetitions > 0) {
                 boost::asio::async_read(socket_tcp_,
@@ -1307,15 +1321,15 @@ private:
 
             if (--num_repetitions > 0) {
                 boost::asio::async_read(socket_tcp_,
-                                        boost::asio::buffer(
-                                                received_data_server,
-                                                message_event_id_bytes),
-                                        boost::bind(
-                                                &Client_bomberman::read_event_id,
-                                                this,
-                                                boost::asio::placeholders::error,
-                                                boost::asio::placeholders::bytes_transferred,
-                                                num_repetitions));
+                    boost::asio::buffer(
+                            received_data_server,
+                            message_event_id_bytes),
+                    boost::bind(
+                            &Client_bomberman::read_event_id,
+                            this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred,
+                            num_repetitions));
             }
             else {
                 update_after_turn();
@@ -1777,6 +1791,7 @@ private:
         else if (map_type == map_positions) {
             for (auto & player_position : player_positions) {
                 data_to_send_gui[bytes_to_send] = (char)player_position.first;
+                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " ";
                 bytes_to_send++;
 
                 Position current_position = player_position.second;
@@ -1788,12 +1803,15 @@ private:
                 *(uint16_t *) (data_to_send_gui +
                                bytes_to_send) = (native_to_big(current_position.y));
                 bytes_to_send += single_position_bytes;
+                cout << "position: " << current_position.x << " " << current_position.y << endl;
                 cout << "\t" << "position sent, bytes: " << bytes_to_send << endl;
             }
         }
         else if (map_type == map_score) {
             for (auto & player_score : scores) {
                 data_to_send_gui[bytes_to_send] = (char)player_score.first;
+                cout << "player id: " << (int)data_to_send_gui[bytes_to_send] << " score " << player_score.second << endl;
+
                 bytes_to_send++;
 
                 *(score_dt *)(data_to_send_gui + bytes_to_send) = native_to_big(player_score.second);
@@ -1835,6 +1853,7 @@ private:
                 *(position_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(block.second);
                 bytes_to_send += single_position_bytes;
+                cout << "block position: " << block.first << " " << block.second << endl;
                 cout << "\t" << "block send, bytes: " << bytes_to_send << endl;
             }
         }
@@ -1869,6 +1888,7 @@ private:
                 *(timer_dt *) (data_to_send_gui + bytes_to_send) =
                         native_to_big(bomb_data.timer);
                 bytes_to_send += timer_bytes;
+                cout << "bomb pos: " << bomb_data.coordinates.x << " " << bomb_data.coordinates.y << " timer " << bomb_data.timer << endl;
                 cout << "\t" << "bomb sent, bytes: " << bytes_to_send << endl;
             }
         }
