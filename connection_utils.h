@@ -317,9 +317,9 @@ private:
 
             //position_dt upper_limit_x = game_status.size_x - 1;
             //position_dt upper_limit_y = game_status.size_y - 1;
-            explosions_temp.insert(make_pair(centre_x, centre_y)); // TODO check if needed
+            // explosions_temp.insert(make_pair(centre_x, centre_y)); // TODO check if needed
 
-            for (int potential_x = centre_x + 1;
+            for (int potential_x = centre_x; // + 1;
                 potential_x <= game_status.explosion_radius + centre_x;
                 potential_x++) {
                     if (!check_if_possible_to_propagate(potential_x, centre_y)) {
@@ -327,7 +327,7 @@ private:
                     }
             }
 
-            for (int potential_x = centre_x - 1;
+            for (int potential_x = centre_x; // - 1;
                  potential_x >= centre_x - game_status.explosion_radius;
                  potential_x--) {
                     if (!check_if_possible_to_propagate(potential_x, centre_y)) {
@@ -335,7 +335,7 @@ private:
                     }
             }
 
-            for (int potential_y = centre_y + 1;
+            for (int potential_y = centre_y; // + 1;
                  potential_y <= game_status.explosion_radius + centre_y;
                  potential_y++) {
                 if (!check_if_possible_to_propagate(centre_x, potential_y)) {
@@ -343,7 +343,7 @@ private:
                 }
             }
 
-            for (int potential_y = centre_y - 1;
+            for (int potential_y = centre_y; // - 1;
                  potential_y >= centre_y - game_status.explosion_radius;
                  potential_y--) {
                 if (!check_if_possible_to_propagate(centre_x, potential_y)) {
