@@ -634,7 +634,7 @@ private:
             cout << "\t" << "SERVER GAVE ME\n";
             uint8_t message_type = received_data_server[0];
             cout << "\t" << (int)message_type << endl;
-            validate_server_mess_id(message_type);
+            // validate_server_mess_id(message_type);
             cout << "\t" << read_bytes << endl;
             validate_data_compare(read_bytes, 1, "No message id read\n");
 
@@ -703,6 +703,11 @@ private:
                                     boost::asio::placeholders::bytes_transferred));
 
                     break;
+
+                default:
+                    cerr << "Incorrect message id\n";
+
+                    exit(1);
             }
         }
     }
@@ -956,7 +961,9 @@ private:
     void read_event_id (const boost::system::error_code& error,
                                     std::size_t read_bytes, map_list_length_dt
                                     num_repetitions) {
-        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+        if (!error || error == boost::asio::error::eof) {
+            validate_data_compare(read_bytes, 1,
+                                  "Turn - events list: no event id read\n");
             uint8_t event_id = received_data_server[0];
 
             switch(event_id) {
@@ -1015,6 +1022,11 @@ private:
                                 num_repetitions));
 
                     break;
+
+                default:
+                    cerr << "Incorrect event id\n";
+
+                    exit(1);
             }
         }
     }
