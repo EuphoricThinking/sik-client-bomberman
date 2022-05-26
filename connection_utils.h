@@ -498,8 +498,8 @@ private:
         if (!error || error == boost::asio::error::eof) {
             cout << "GUI received " << received_data_gui[0] << endl;
             size_t bytes_to_send = 0;
-
             if (read_bytes > max_input_message_bytes || read_bytes == 0) {
+                cout << "INCOR " << read_bytes << endl;
                 cerr << "Incorrect GUI message length\n";
 
                 exit(1);
@@ -602,6 +602,7 @@ private:
         if (!error || error == boost::asio::error::eof) { //} || read_bytes > 0) {
             cout << "SERVER GAVE ME\n";
             uint8_t message_type = received_data_server[0];
+            cout << (int)message_type << endl;
             validate_server_mess_id(message_type);
             validate_data_compare(read_bytes, 1, "No message id read\n");
 
@@ -629,7 +630,7 @@ private:
                                     this,
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred,
-                                    1)); // how many times - single player
+                                    1, false)); // how many times - single player
 
                     break;
 
@@ -761,7 +762,8 @@ private:
      * Accepted player
      */
     void read_player_id_and_name_length(const boost::system::error_code& error,
-                                        std::size_t read_bytes, int num_repetitions) {
+                                        std::size_t read_bytes, int num_repetitions,
+                                        bool is_game_started) {
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             if (num_repetitions > 0) {
                 validate_data_compare(read_bytes, player_id_name_header_length,
@@ -776,7 +778,8 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                num_repetitions, player_id, string_length_to_read));
+                                num_repetitions, player_id, string_length_to_read,
+                                is_game_started));
             }
             else {
                 process_data_from_server_send_to_gui();
@@ -786,7 +789,8 @@ private:
 
     void read_player_name_string_and_address_length(const boost::system::error_code& error,
                                         std::size_t read_bytes, int num_repetitions,
-                                        player_id_dt player_id, size_t name_length) {
+                                        player_id_dt player_id, size_t name_length,
+                                        bool is_game_started) {
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             validate_data_compare(read_bytes, name_length, "Error player name");
 
@@ -807,14 +811,15 @@ private:
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
                             num_repetitions, player_id, address_length,
-                            player_name_temp));
+                            player_name_temp, is_game_started));
         }
     }
 
     void read_player_address_string_add_player(const boost::system::error_code& error,
                                                     std::size_t read_bytes, int num_repetitions,
                                                     player_id_dt player_id, size_t address_length,
-                                                    const string& player_name_temp) {
+                                                    const string& player_name_temp,
+                                                    bool is_game_started) {
         if (!error || error == boost::asio::error::eof || read_bytes > 0) {
             validate_data_compare(read_bytes, address_length, "Error player address");
 
@@ -836,10 +841,15 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                num_repetitions));
+                                num_repetitions, is_game_started));
             }
             else {
-                process_data_from_server_send_to_gui();
+                if (is_game_started) {
+                    receive_from_server_send_to_gui();
+                }
+                else {
+                    process_data_from_server_send_to_gui();
+                }
             }
         }
     }
@@ -861,9 +871,9 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                map_length));
+                                map_length, true));
 
-            receive_from_server_send_to_gui(); //TODO added
+            //receive_from_server_send_to_gui(); //TODO added
         }
     }
 
