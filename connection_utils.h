@@ -188,6 +188,7 @@ private:
     std::set<std::pair<pos_x, pos_y>> explosions_temp;
     std::map<player_id_dt, score_dt> scores;
     std::unordered_set<player_id_dt> death_per_turn_temp;
+    std::set<std::pair<pos_x, pos_y>> blocks_exploded_temp;
 
     string server_name;
     //uint8_t send_to_gui_id;
@@ -301,30 +302,36 @@ private:
             //position_dt upper_limit_x = game_status.size_x - 1;
             //position_dt upper_limit_y = game_status.size_y - 1;
             explosions_temp.insert(make_pair(centre_x, centre_y));
-
+            
             for (position_dt coordinate: {centre_x, centre_y}) {
                 for (int sign : {-1, 1}) {
                     for (int range = 1; range <= game_status.explosion_radius; range++) {
-                        bool found_block = false;
+                        //bool found_block = false;
                         int potential_x = centre_x + (sign)*range;
                         int potential_y = centre_y + (sign)*range;
 
                         if (in_range(potential_x, game_status.size_x)
-                            && in_range(potential_y, game_status.size_y)) {
-                                explosions_temp.insert(make_pair(potential_x, potential_y));
-
-                                auto first_block = blocks.find(make_pair(potential_x, potential_y));
-                                if (first_block != blocks.end()) {
-                                    break;
-                                }
+                            && in_range(potential_y, game_status.size_y)
+                            && blocks_exploded_temp.find(
+                                    make_pair(potential_x, potential_y))
+                            != blocks_exploded_temp.end()) {
+                                explosions_temp.insert(make_pair(potential_x,
+                                                                 potential_y));
                         }
                         else {
                             break;
                         }
                     }
                 }
+
+                // TODO ERASE BOMB
             }
+
+            //return true;
         }
+        //else {
+        //    return false;
+        //}
     }
 /*    void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
@@ -1156,11 +1163,15 @@ private:
                     received_data_server);
 
             auto iterBomb = bombs.find(temp_bomb_id);
+            //bool if_bomb_exists = add_explosion_cross(temp_bomb_id);
+
             if (iterBomb != bombs.end()) {
-                position_dt x = iterBomb->second.coordinates.x;
-                position_dt y = iterBomb->second.coordinates.y;
-                explosions_temp.insert(make_pair(x, y));
-                bombs.erase(temp_bomb_id);
+            //if (if_bomb_exists) {
+//                position_dt x = iterBomb->second.coordinates.x;
+//                position_dt y = iterBomb->second.coordinates.y;
+//                explosions_temp.insert(make_pair(x, y));
+
+                // bombs.erase(temp_bomb_id); // TODO erase in the end
 
                 map_list_length_dt player_id_list_length =
                         big_to_native(*(map_list_length_dt *) (received_data_server
@@ -1176,7 +1187,8 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                num_repetitions, player_id_list_length));
+                                num_repetitions, player_id_list_length,
+                                temp_bomb_id));
                 }
                 else {
                     boost::asio::async_read(socket_tcp_,
@@ -1188,11 +1200,12 @@ private:
                                     this,
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred,
-                                    num_repetitions));
+                                    num_repetitions, temp_bomb_id));
                 }
             }
             else {
                 cerr << "Bomb not found\n";
+
                 exit(1);
             }
         }
@@ -1203,7 +1216,8 @@ private:
      */
     void read_player_id (const boost::system::error_code& error,
                          std::size_t read_bytes, map_list_length_dt
-                         num_repetitions, map_list_length_dt player_id_left_elements) {
+                         num_repetitions, map_list_length_dt player_id_left_elements,
+                         bomb_id_dt bomb_id) {
         if (!error || error == boost::asio::error::eof) {
             validate_data_compare(read_bytes, player_id_bytes, "Error in player id");
 
@@ -1219,7 +1233,7 @@ private:
                             this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
-                            num_repetitions, player_id_left_elements));
+                            num_repetitions, player_id_left_elements, bomb_id));
             }
             else {
                 boost::asio::async_read(socket_tcp_,
@@ -1231,7 +1245,7 @@ private:
                             this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
-                            num_repetitions));
+                            num_repetitions, bomb_id));
             }
         }
     }
@@ -1241,7 +1255,7 @@ private:
      */
     void read_blocks_destroyed_length (const boost::system::error_code& error,
                                        std::size_t read_bytes, map_list_length_dt
-                                       num_repetitions) {
+                                       num_repetitions, bomb_id_dt bomb_id) {
         if (!error || error == boost::asio::error::eof) {
             validate_data_compare(read_bytes, map_list_length,
                                   "Bomb exploded: Incorrect blocks destroyed length");
@@ -1259,9 +1273,12 @@ private:
                             this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
-                            num_repetitions, blocks_destroyed_length));
+                            num_repetitions, blocks_destroyed_length, bomb_id));
             }
             else {
+                add_explosion_cross(bomb_id);
+                bombs.erase(bomb_id);
+
                 if (--num_repetitions > 0) {
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
@@ -1286,7 +1303,8 @@ private:
     void read_blocks_destroyed_positions (const boost::system::error_code& error,
                                           std::size_t read_bytes, map_list_length_dt
                                           num_repetitions,
-                                          map_list_length_dt blocks_position_left_elements) {
+                                          map_list_length_dt blocks_position_left_elements,
+                                          bomb_id_dt bomb_id) {
         if (!error || error == boost::asio::error::eof) {
             validate_data_compare(read_bytes, position_bytes,
                                   "Bomb exploded: incorrect position read");
@@ -1298,6 +1316,7 @@ private:
 
             blocks.erase(make_pair(x, y));
             explosions_temp.insert(make_pair(x, y));
+            blocks_exploded_temp.insert(make_pair(x, y)); // TODO added
 
             if (--blocks_position_left_elements > 0) {
                 boost::asio::async_read(socket_tcp_,
@@ -1309,9 +1328,13 @@ private:
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred,
-                                num_repetitions, blocks_position_left_elements));
+                                num_repetitions, blocks_position_left_elements,
+                                bomb_id));
             }
             else {
+                add_explosion_cross(bomb_id);
+                bombs.erase(bomb_id);
+
                 if (--num_repetitions > 0) {
                     boost::asio::async_read(socket_tcp_,
                         boost::asio::buffer(
