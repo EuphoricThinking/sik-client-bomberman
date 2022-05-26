@@ -281,6 +281,48 @@ private:
         }
         cout << endl;
     }
+
+    bool in_range(int to_test, int upper_limit) {
+        if (to_test >= 0 && to_test < upper_limit) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    void add_explosion_cross(bomb_id_dt exploding_bomb_id) {
+        auto exploded = bombs.find(exploding_bomb_id);
+
+        if (exploded != bombs.end()) {
+            position_dt centre_x = exploded->second.coordinates.x;
+            position_dt centre_y = exploded->second.coordinates.y;
+
+            //position_dt upper_limit_x = game_status.size_x - 1;
+            //position_dt upper_limit_y = game_status.size_y - 1;
+            explosions_temp.insert(make_pair(centre_x, centre_y));
+
+            for (position_dt coordinate: {centre_x, centre_y}) {
+                for (int sign : {-1, 1}) {
+                    for (int range = 1; range <= game_status.explosion_radius; range++) {
+                        bool found_block = false;
+                        int potential_x = centre_x + (sign)*range;
+                        int potential_y = centre_y + (sign)*range;
+
+                        if (!found_block && in_range(potential_x, game_status.size_x)
+                            && in_range(potential_y, game_status.size_y)) {
+                                explosions_temp.insert(make_pair(potential_x, potential_y));
+
+                                auto first_block = blocks.find(make_pair(potential_x, potential_y));
+                                if (first_block != blocks.end()) {
+                                    found_block = true;
+                                }
+                        }
+                    }
+                }
+            }
+        }
+    }
 /*    void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
             temp_process_server_mess.event_id = received_data_server[0];
