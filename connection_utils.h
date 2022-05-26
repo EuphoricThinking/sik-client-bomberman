@@ -309,14 +309,17 @@ private:
                         int potential_x = centre_x + (sign)*range;
                         int potential_y = centre_y + (sign)*range;
 
-                        if (!found_block && in_range(potential_x, game_status.size_x)
+                        if (in_range(potential_x, game_status.size_x)
                             && in_range(potential_y, game_status.size_y)) {
                                 explosions_temp.insert(make_pair(potential_x, potential_y));
 
                                 auto first_block = blocks.find(make_pair(potential_x, potential_y));
                                 if (first_block != blocks.end()) {
-                                    found_block = true;
+                                    break;
                                 }
+                        }
+                        else {
+                            break;
                         }
                     }
                 }
