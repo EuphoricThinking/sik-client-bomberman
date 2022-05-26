@@ -345,6 +345,13 @@ void Client_bomberman::check_message_id(const boost::system::error_code& error,
                 exit(1);
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -368,6 +375,13 @@ void Client_bomberman::read_server_name_length (
                             boost::asio::placeholders::bytes_transferred,
                             read_length));
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 void Client_bomberman::read_full_server_name_hello (
@@ -390,6 +404,13 @@ void Client_bomberman::read_full_server_name_hello (
                         this,
                         boost::asio::placeholders::error,
                         boost::asio::placeholders::bytes_transferred));
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -426,6 +447,13 @@ void Client_bomberman::read_hello_body_without_string (
 
         process_data_from_server_send_to_gui();
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -436,11 +464,12 @@ void Client_bomberman::read_player_id_and_name_length(
                                     std::size_t read_bytes,
                                     int num_repetitions,
                                     bool is_game_started) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
+        validate_data_compare(read_bytes, player_id_name_header_length,
+                              "Error in reading player id and string "
+                              "name length");
+
         if (num_repetitions > 0) {
-            validate_data_compare(read_bytes, player_id_name_header_length,
-                                  "Error in reading player id and string "
-                                  "name length");
             player_id_dt player_id = received_data_server[0];
             size_t string_length_to_read = received_data_server[1];
 
@@ -459,6 +488,13 @@ void Client_bomberman::read_player_id_and_name_length(
             process_data_from_server_send_to_gui();
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 void Client_bomberman::read_player_name_string_and_address_length(
@@ -468,7 +504,7 @@ void Client_bomberman::read_player_name_string_and_address_length(
                                     player_id_dt player_id,
                                     size_t name_length,
                                     bool is_game_started) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
         validate_data_compare(read_bytes, name_length, "Error player name");
 
         std::string player_name_temp = "";
@@ -491,6 +527,13 @@ void Client_bomberman::read_player_name_string_and_address_length(
                     num_repetitions, player_id, address_length,
                     player_name_temp, is_game_started));
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 void Client_bomberman::read_player_address_string_add_player(
@@ -501,7 +544,7 @@ void Client_bomberman::read_player_address_string_add_player(
                                     size_t address_length,
                                     const string& player_name_temp,
                                     bool is_game_started) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
         validate_data_compare(read_bytes, address_length,
                               "Error player address");
 
@@ -537,6 +580,13 @@ void Client_bomberman::read_player_address_string_add_player(
             }
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -545,7 +595,7 @@ void Client_bomberman::read_player_address_string_add_player(
 void Client_bomberman::read_player_map_length (
                                 const boost::system::error_code& error,
                                 std::size_t read_bytes) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
         validate_data_compare(read_bytes, map_list_length,
                               "GameStarted: incorrect map length");
 
@@ -568,6 +618,13 @@ void Client_bomberman::read_player_map_length (
             receive_from_server_send_to_gui();
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -576,7 +633,7 @@ void Client_bomberman::read_player_map_length (
 void Client_bomberman::read_turn_and_list_length (
                                 const boost::system::error_code& error,
                                 std::size_t read_bytes) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
         validate_data_compare(read_bytes, turn_header,
                               "Incorrect turn header");
 
@@ -602,6 +659,13 @@ void Client_bomberman::read_turn_and_list_length (
         else {
             process_data_from_server_send_to_gui();
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -681,6 +745,13 @@ void Client_bomberman::read_event_id (const boost::system::error_code& error,
                 exit(1);
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 void Client_bomberman::update_after_turn() {
@@ -695,7 +766,7 @@ void Client_bomberman::read_bomb_id_and_position (
                     const boost::system::error_code& error,
                     std::size_t read_bytes, map_list_length_dt
                     num_repetitions) {
-    if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+    if (!error || error == boost::asio::error::eof) {
         validate_data_compare(read_bytes, bomb_placed_header,
                               "Error in reading bomb position");
 
@@ -728,6 +799,13 @@ void Client_bomberman::read_bomb_id_and_position (
 
             process_data_from_server_send_to_gui();
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -786,6 +864,13 @@ void Client_bomberman::read_bomb_id_and_player_id_length (
             exit(1);
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -829,6 +914,13 @@ void Client_bomberman::read_player_id (const boost::system::error_code& error,
                         boost::asio::placeholders::bytes_transferred,
                         num_repetitions, bomb_id));
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -883,6 +975,13 @@ void Client_bomberman::read_blocks_destroyed_length (
                 process_data_from_server_send_to_gui();
             }
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -941,6 +1040,13 @@ void Client_bomberman::read_blocks_destroyed_positions (const boost::system::err
             }
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -989,6 +1095,13 @@ void Client_bomberman::read_player_id_and_position (const boost::system::error_c
             process_data_from_server_send_to_gui();
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /*
@@ -1025,6 +1138,13 @@ void Client_bomberman::read_block_position (const boost::system::error_code& err
             process_data_from_server_send_to_gui();
         }
     }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
+    }
 }
 
 /************* End of Turn *************/
@@ -1057,6 +1177,13 @@ void Client_bomberman::read_score_map_length (const boost::system::error_code& e
         else {
             process_data_from_server_send_to_gui();
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -1096,6 +1223,13 @@ void Client_bomberman::read_player_id_score (const boost::system::error_code& er
         else {
             process_data_from_server_send_to_gui();
         }
+    }
+    else {
+        boost::system::error_code ec;
+        socket_tcp_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_tcp_.close();
+
+        cerr << "Error in server message\n";
     }
 }
 
@@ -1369,6 +1503,10 @@ Client_bomberman::Client_bomberman(io_context& io, const string& server_name,
     catch (exception& e)
     {
         cerr << e.what() << endl;
+    }
+    catch (...)
+    {
+        cerr << "An error has occurred while establishing the connection\n";
     }
 };
 
