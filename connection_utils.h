@@ -575,11 +575,6 @@ private:
                         bytes_to_send++;
 
                         break;
-
-                    default:
-                        cerr << "Incorrect message id\n";
-
-                        exit(1);
                 }
             }
 
