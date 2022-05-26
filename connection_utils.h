@@ -1658,15 +1658,18 @@ private:
         }
         else if (map_type == map_positions) {
             for (auto & player_position : player_positions) {
+                data_to_send_gui[bytes_to_send] = (char)player_position.first;
+                bytes_to_send++;
+
                 Position current_position = player_position.second;
 
                 *(uint16_t *) (data_to_send_gui +
                                bytes_to_send) = (native_to_big(current_position.x));
-                bytes_to_send += position_bytes;
+                bytes_to_send += single_position_bytes;
 
                 *(uint16_t *) (data_to_send_gui +
                                bytes_to_send) = (native_to_big(current_position.y));
-                bytes_to_send += position_bytes;
+                bytes_to_send += single_position_bytes;
             }
         }
         else if (map_type == map_score) {
@@ -1788,6 +1791,7 @@ private:
 
     void process_data_from_server_send_to_gui() {
         //uint8_t message_type = temp_process_server_mess.server_current_message_id;
+        cout << "I should send to gui\n";
         uint8_t message_type = message_id;
 
         if (message_type != ServerMessage::GameStarted) {
@@ -1816,6 +1820,7 @@ private:
         //num_bytes_to_read_server = 1;
         //uint8_t message_type = temp_process_server_mess.server_current_message_id;
         //uint8_t message_type = message_id;
+        cout << "I have sent to gui\n";
 
         if (message_id == ServerMessage::Turn) {
             death_per_turn_temp.clear();
@@ -1877,16 +1882,22 @@ public:
             socket_tcp_.connect(endpoints->endpoint());
             socket_tcp_.set_option(option); */
 
-            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
-            //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
-            //socket_udp_.open(udp::v6());
+ /*           udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
             cout << "udp endpoints resolved\n";
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
             cout << "udp connected" << endl;
+ */
+
+            //socket_udp_.bind(udp::endpoint(udp::v6(), client_port));
+            //socket_udp_.open(udp::v6());
+
             //udp::resolver res(io_context)
             //auto endpoints = res.resolve(host, port)
             //gui_output.open(udp::v6())
             //gui_output.connect(endpoints->endpoint())
+            auto endpoints = udp_resolver_.resolve(gui_name, gui_port);
+            socket_udp_.open(udp::v6());
+            socket_udp_.connect(endpoints->endpoint());
 
             //gui_input(io_context, udp::endpoint(udp::v6(), port))
 
