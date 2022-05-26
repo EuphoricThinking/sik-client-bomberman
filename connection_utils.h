@@ -510,6 +510,10 @@ private:
                 data_to_send_server[0] = ClientMessage::Join;
                 bytes_to_send++;
 
+                data_to_send_server[bytes_to_send] = (char)player_name.length();
+                cout << "JOIN sending player name length: " << data_to_send_server[bytes_to_send];
+                bytes_to_send++;
+
                 strcpy(data_to_send_server + bytes_to_send, player_name.c_str());
                 bytes_to_send += player_name.length();
             }
@@ -605,6 +609,7 @@ private:
             uint8_t message_type = received_data_server[0];
             cout << (int)message_type << endl;
             validate_server_mess_id(message_type);
+            cout << read_bytes << endl;
             validate_data_compare(read_bytes, 1, "No message id read\n");
 
             message_id = message_type;
@@ -1248,29 +1253,28 @@ private:
                 Position & temp_pos = iterPlayer->second;
                 temp_pos.x = x;
                 temp_pos.y = y;
-
-                if (--num_repetitions > 0) {
-                    boost::asio::async_read(socket_tcp_,
-                        boost::asio::buffer(
-                                received_data_server,
-                                message_event_id_bytes),
-                        boost::bind(
-                                &Client_bomberman::read_event_id,
-                                this,
-                                boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred,
-                                num_repetitions));
-                }
-                else {
-                    update_after_turn();
-
-                    process_data_from_server_send_to_gui();
-                }
             }
             else {
-                cerr << "Turn - Player Moved: player not found\n";
+                player_positions.insert(make_pair(player_id,
+                                                  Position{x, y}));
+            }
 
-                exit(1);
+            if (--num_repetitions > 0) {
+                boost::asio::async_read(socket_tcp_,
+                                        boost::asio::buffer(
+                                                received_data_server,
+                                                message_event_id_bytes),
+                                        boost::bind(
+                                                &Client_bomberman::read_event_id,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred,
+                                                num_repetitions));
+            }
+            else {
+                update_after_turn();
+
+                process_data_from_server_send_to_gui();
             }
         }
     }
@@ -1357,14 +1361,17 @@ private:
             score_dt score = big_to_native(*(score_dt *)
                     (received_data_server + player_id_bytes));
 
+            cout << "game ended player id " << player_id << endl;
+
             auto iter = scores.find(player_id);
             if (iter != scores.end()) {
                 iter->second = score;
             }
             else {
-                cerr << "Game ended: player not found\n";
-
-                exit(1);
+//                cerr << "Game ended: player not found\n";
+//
+//                exit(1);
+                scores.insert(make_pair(player_id, score));
             }
 
             if (--num_repetitions > 0) {
@@ -1880,9 +1887,9 @@ private:
             }
 
             cout << "sending bytes: " << bytes_to_send << "\n\n";
-            printGameData(game_status);
-            cout <<"\n\n";
-            print_whole_message(bytes_to_send);
+            //printGameData(game_status);
+            //cout <<"\n\n";
+            //print_whole_message(bytes_to_send);
             socket_udp_.async_send(
                     boost::asio::buffer(data_to_send_gui, bytes_to_send),
                     boost::bind(&Client_bomberman::after_send_to_gui,
