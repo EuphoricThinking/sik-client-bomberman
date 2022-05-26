@@ -18,37 +18,13 @@ using std::size_t;
 
 namespace po = boost::program_options;
 
-void iterate_over_command_line_options(po::variables_map chosen_options) {
-    for (const auto& it : chosen_options) {
-        cout << it.first.c_str() << " ";
-        auto& value = it.second.value();
-        if (auto v = boost::any_cast<int64_t>(&value))
-            std::cout << *v;
-        else if (auto v1 = boost::any_cast<std::string>(&value))
-            std::cout << *v1;
-        else
-            std::cout << "error";
-    }
-
-    cout << "\n";
-}
-
-void print_saved_arguments(string& temp_gui, string& player_name,
-                           int64_t& port, string& server_address) {
-    cout << "R gui: " << temp_gui << "\n"
-    << "R plname: " << player_name << "\n"
-    << "R port: " << port << "\n"
-    << "R server: " << server_address << endl;
-}
-
 void validate_input(string& temp_gui,
                     int64_t port, string& server_address) {
     if (std::count(temp_gui.begin(), temp_gui.end(), ':') < 1
         || std::count(server_address.begin(), server_address.end(), ':') < 1) {
-        //cout << "address: " << temp_gui << endl;
-        cerr << "Incorrect address format\nNeeds: <host_identificator>:<port>\n";
+            cerr << "Incorrect address format\nNeeds: <host_identificator>:<port>\n";
 
-        exit(1);
+            exit(1);
     }
     else if (port < u16_min || port > u16_max) {
         cerr << "Incorrect port value; should be in range [" << u16_min << ", "
@@ -56,33 +32,6 @@ void validate_input(string& temp_gui,
         exit(1);
     }
 }
-//
-//class u16 {
-//public:
-//    u16(int64_t i): i(i) {}
-//    int64_t i;
-//};
-//
-//void validate(boost::any& v,
-//              const std::vector<std::string>& values,
-//              u16* target_type, int)
-//{
-//
-//    using namespace boost::program_options;
-//
-//    // Make sure no previous assignment to 'a' was made.
-//    validators::check_first_occurrence(v);
-//    // Extract the first string from 'values'. If there is more than
-//    // one string, it's an error, and exception will be thrown.
-//    const string& s = validators::get_single_string(values);
-//    int64_t to_int = strtoll(s.c_str(), NULL, 10);
-//    if (to_int >= 0 && to_int <= u16_max) {
-//        v = boost::any(u16(to_int));
-//    } else {
-//        throw validation_error(validation_error::invalid_option_value);
-//    }
-//}
-
 
 void read_command_line_options(string& temp_gui, string& player_name,
                                int64_t& port, string& server_address,
@@ -104,8 +53,6 @@ void read_command_line_options(string& temp_gui, string& player_name,
         po::variables_map chosen_options;
         po::store(po::parse_command_line(argc, argv, desc), chosen_options);
         po::notify(chosen_options);
-//        cout << chosen_options.size() << " const: " << client_number_arguments
-//             << endl;
 
         if (chosen_options.count("help")) {
             cout << desc << endl;
@@ -116,8 +63,6 @@ void read_command_line_options(string& temp_gui, string& player_name,
 
             exit(1);
         } else {
-            // iterate_over_command_line_options(chosen_options);
-
             temp_gui = chosen_options["gui-address"].as<string>();
             player_name = chosen_options["player-name"].as<string>();
             port = chosen_options["port"].as<int64_t>();
@@ -140,7 +85,6 @@ void read_command_line_options(string& temp_gui, string& player_name,
 
 void check_if_alphanumeric(const string& to_be_checked, size_t start) {
     for (size_t i = start; i < to_be_checked.length(); i++) {
-//        cout << to_be_checked[i] << endl;
         if (!std::isdigit(to_be_checked[i])) {
             cerr << "Port number should include only digits\n";
 
@@ -154,13 +98,11 @@ void split_into_host_port(const string& to_be_splitted, string& host_name, strin
     size_t string_length = to_be_splitted.length();
 
     if (position_of_last_colon == std::string::npos || position_of_last_colon == string_length - 1) {
-//        if (position_of_last_colon == std::string::npos) cout << "npos" << endl;
         cerr << "Incorrect format\nExpected: <host_name>:<port>\n";
 
         exit(1);
     }
 
- //   cout << to_be_splitted.substr(0, position_of_last_colon) << endl;
     check_if_alphanumeric(to_be_splitted, position_of_last_colon + 1);
 
     host_name = to_be_splitted.substr(0, position_of_last_colon);
@@ -181,13 +123,9 @@ int main(int argc, char* argv[]) {
 
     read_command_line_options(temp_gui, player_name, port, temp_server_address,
                               argc, argv);
-    // print_saved_arguments(temp_gui, player_name, port, temp_server_address);
 
-    // cout << "beliar" << endl;
     split_into_host_port(temp_gui, host_gui_name, port_gui);
     split_into_host_port(temp_server_address, server_name, port_server);
-    // cout << host_gui_name << " " << port_gui << endl;
-    // cout << server_name << " " << port_server << endl;
 
     io_context io;
     Client_bomberman client(io, server_name, port_server, host_gui_name,

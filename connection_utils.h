@@ -1354,7 +1354,7 @@ public:
             boost::asio::connect(socket_tcp_, server_endpoints_);
             socket_tcp_.set_option(option);
 
-            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port); 
+            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port);
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
 
             receive_from_server_send_to_gui();
