@@ -79,6 +79,7 @@ typedef struct Bomb {
 } Bomb;
 
 typedef struct GameData {
+    string server_name = "";
     uint8_t players_count = 0;
     uint16_t size_x = 0;
     uint16_t size_y = 0;
@@ -190,7 +191,7 @@ private:
 
     Client_bomberman(const Client_bomberman&) = delete;
 
-    void add_player_to_map_players(size_t read_bytes) {
+/*    void add_player_to_map_players(size_t read_bytes) {
         if (!temp_process_server_mess.is_player_header_read) {
             temp_process_server_mess.temp_player_id =
                     received_data_server[0];
@@ -244,7 +245,7 @@ private:
             bomb_data.timer--;
         }
     }
-
+*/
     void update_player_scores() {
         for (auto dead_player : death_per_turn_temp) {
             auto player_score = scores.find(dead_player);
@@ -258,7 +259,7 @@ private:
             bomb_data.timer--;
         }
     }
-    void read_and_process_events(size_t read_bytes) {
+/*    void read_and_process_events(size_t read_bytes) {
         if (temp_process_server_mess.event_id == def_no_message) {
             temp_process_server_mess.event_id = received_data_server[0];
 
@@ -474,6 +475,9 @@ private:
             }
         }
     }
+    */
+
+
     /*
      *  GUI -> client -> server
      */
@@ -485,10 +489,11 @@ private:
             size_t bytes_to_send = 0;
 
             if (read_bytes > max_input_message_bytes || read_bytes == 0) {
-                cerr << "Incorrect GUI message\n";
+                cerr << "Incorrect GUI message length\n";
 
                 exit(1);
             }
+
             if (!gameStarted) {
                 data_to_send_server[0] = ClientMessage::Join;
                 bytes_to_send++;
@@ -579,9 +584,11 @@ private:
 
     void check_message_id(const boost::system::error_code& error,
                                    std::size_t read_bytes) {
-        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+        if (!error || error == boost::asio::error::eof) { //} || read_bytes > 0) {
             uint8_t message_type = received_data_server[0];
             validate_server_mess_id(message_type);
+            validate_data_compare(read_bytes, 1, "No message id read\n");
+
             message_id = message_type;
 
             switch (message_type) {
@@ -651,7 +658,9 @@ private:
      */
     void read_server_name_length (const boost::system::error_code& error,
                                   std::size_t read_bytes) {
-        if (!error || error == boost::asio::error::eof || read_bytes > 0) {
+        if (!error || error == boost::asio::error::eof) { //} || read_bytes > 0) {
+            validate_data_compare(read_bytes, 1, "Hello: incorrect player name length\n");
+
             size_t read_length = received_data_server[0];
 
             boost::asio::async_read(socket_tcp_,
@@ -671,8 +680,9 @@ private:
             validate_data_compare(read_bytes, name_length,
                                   "Error in server name");
 
+            game_status.server_name = "";
             if (read_bytes > 0) {
-                server_name = std::string(received_data_server,
+                game_status.server_name = std::string(received_data_server,
                                           received_data_server + read_bytes);
             }
 
@@ -1296,7 +1306,7 @@ private:
             player_id_dt player_id = received_data_server[0];
 
             score_dt score = big_to_native(*(score_dt *)
-                    (received_data_server + 1));
+                    (received_data_server + player_id_bytes));
 
             auto iter = scores.find(player_id);
             if (iter != scores.end()) {
@@ -1314,7 +1324,7 @@ private:
                             received_data_server,
                             player_id_score_bytes),
                     boost::bind(
-                            &Client_bomberman::read_event_id,
+                            &Client_bomberman::read_player_id_score,
                             this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred,
@@ -1328,7 +1338,7 @@ private:
 
     /******* End of reading server messages ******/
 
-    void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
+  /*  void after_receive_from_server([[maybe_unused]] const boost::system::error_code& error,
                                    [[maybe_unused]] std::size_t read_bytes) {
         if (received_data_server[0] == ServerMessage::Hello) {
             cout << "HELLLLLO\n"; // id raead
@@ -1612,7 +1622,7 @@ private:
                 process_data_from_server_send_to_gui();
             }
         }
-    }
+    } */
 
     void write_map_to_buffer(size_t& bytes_to_send, int map_type) {
         size_t size_to_send = players.size();
