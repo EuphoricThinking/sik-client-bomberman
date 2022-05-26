@@ -19,6 +19,8 @@ const uint8_t def_no_message = 10;
 const uint8_t max_server_mess_id = 4;
 const uint8_t max_event_mess_id = 3;
 
+const uint8_t max_gui_message_id = 2;
+
 const size_t max_input_message_bytes = 2;
 
 /*
