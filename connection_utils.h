@@ -843,6 +843,7 @@ private:
             }
 
             players.insert(make_pair(player_id, Player{player_name_temp, player_address}));
+            scores.insert(make_pair(player_id, 0));// TODO added
 
             printPlayer(player_id, player_name_temp, player_address);
 
@@ -2014,7 +2015,7 @@ public:
             cout << "Set option " << server_name << " " << server_port << endl;
 
             tcp::resolver::results_type server_endpoints_ =
-                    tcp_resolver_.resolve(tcp::v4(), server_name, server_port);
+                    tcp_resolver_.resolve(server_name, server_port); // tcp::v6()
             cout << server_endpoints_->host_name() << ": " << server_endpoints_->service_name() << endl;
             cout << "tcp resolved" << endl;
             boost::asio::connect(socket_tcp_, server_endpoints_);
@@ -2027,7 +2028,7 @@ public:
             socket_tcp_.connect(endpoints->endpoint());
             socket_tcp_.set_option(option); */
 
-            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(udp::v6(), gui_name, gui_port);
+            udp::resolver::results_type gui_endpoints_to_send_ = udp_resolver_.resolve(gui_name, gui_port); // udp::v6()
             cout << "udp endpoints resolved\n";
             boost::asio::connect(socket_udp_, gui_endpoints_to_send_);
             cout << "udp connected" << endl;
